@@ -118,10 +118,30 @@ The heuristic that pixels reporting an intensity close to the minimum or maximum
 The proposed method works on both DAVIS-like data and on pure event stream and can be used to augment other methods.
 
 \section{Event-driven Video Frame Synthesis}
-!Code is available!
+!Code available!
 
+A new high framerate video synthesis framework by fusing intensity frames with event streams is introduced.
+It contains two steps: Differentiable Model-based Reconstruction (DMR) and Residual Denoiser (DR).
 
+Reconstruction is performed by DMR, which fuses event- and frame-based information. 
+It's results may have visual artifacts due to the ill-posedness of the fusion problem and different noise levels between the two sensing modalities.
+To address this, additional DR deep-nn model is added on top to denoise the result.
 
+The DMR is performed by minimizing a weighted combination of several loss functions: 
+pixel loss, which includes per-pixel difference against intensity and event pixels in l1 norm over the entire available data range;
+and sparsity loss - total variation (TV) sparsity in the spatial and temporal dimensions of the resulting high-res tensor.
+Sparsity loss has two terms: one denoising term for instensity tensor and another for event denoising.
+
+For RD authors enforce generated event frames to contain less than 20% of events, which is motivated by a statistical analysis from supplementary material of the paper.
+
+The event sensing model requires binning events into frames. 
+Events happenign at different locations but at very close timestamps can be processed in the same event frame.
+Two binning strategies are explored.
+
+The authors mention that existing DAVIS dataset doesn't contain enough sharp intensity images captured at high speed for training/fine tuning. 
+Because of that they are planning to use event simulation.
+
+!The paper is a  treasure trove for paper references!
 
 
 \end{document}
