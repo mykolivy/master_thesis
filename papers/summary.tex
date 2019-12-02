@@ -20,6 +20,21 @@ The advantages of the event cameras over the traditional ones are:
 \subsection{}
 
 \section{Events-to-Video: Bringing Modern Computer Vision to Event Cameras}
+!Implemented in PyTorch, but so far I failed to find the source code!
+
+In this paper authors establish a bridge between vision with event cameras and conventional computer vision.
+A U-Net network architecture is used to reconstruct natural videos from a stream of events, trained on a large quantity of simulated event sequences with corresponding ground-truth images.
+After this, off-the-shelf computer vision algorithms that were buuilt to process conventional images are applied for object classification and visual-inertial odometry problems.
+
+It is noted that events cannot be directly integrated to recover accurate intensity images in practice.
+Events are represented as a spatio-temporal voxel grid, which introduces some latency due to processing of events in windows.
+
+The training data was generated from MS-COCO images by first mapping those to a 3D plane, with events triggered by random camera motion within the scene. The network is trained on simulated data, but is shown to generalize well to real event data.
+
+The network itself features residual blocks as well as a recurrent connection to propagate intensity  information forward in time.
+It does not need to reconstruct a new image from scratch at every time step, but only to incrementally update the previous reconstructions using the new sequence of events.
+
+The objective is to minimize the calibrated perceptual loss (LPIPS), which averages the distances between VGG features computed across multiple layers. By minimizing this loss, the network essentially learns to endow the reconstructed images with natural statistics. It is important to note that instead of focusing mainly on the quality of the reconstructions, the authors build their approach with the goal of applying standard computer vision techniques to the reconstructions.
 
 \section{A QVGA 143 dB Dynamic Range Frame-Free PWM Image Sensor With Lossless Pixel-Level Video Compression and Time-Domain CDS}
 \paragraph{}
@@ -132,7 +147,7 @@ pixel loss, which includes per-pixel difference against intensity and event pixe
 and sparsity loss - total variation (TV) sparsity in the spatial and temporal dimensions of the resulting high-res tensor.
 Sparsity loss has two terms: one denoising term for instensity tensor and another for event denoising.
 
-For RD authors enforce generated event frames to contain less than 20% of events, which is motivated by a statistical analysis from supplementary material of the paper.
+For RD authors enforce generated event frames to contain less than 20\% of events, which is motivated by a statistical analysis from supplementary material of the paper.
 
 The event sensing model requires binning events into frames. 
 Events happenign at different locations but at very close timestamps can be processed in the same event frame.
@@ -142,6 +157,38 @@ The authors mention that existing DAVIS dataset doesn't contain enough sharp int
 Because of that they are planning to use event simulation.
 
 !The paper is a  treasure trove for paper references!
+
+\section{A Low-complexity Image Compression Algorithm for Address-Event Representation (AER) PWM Image Sensors}
+
+In this paper a block based image compression algorithm, which exploits the intensity-ordered nature of AER image sensors to simultaneously achieve lower computational complexity and lower address overhead for individual pixels.
+Under this scheme, the address vector overhead can be dramatically reduced.
+
+The pixels trigger in the descending order of their sensed light intensity.
+
+The scheme is as follows:
+the image is first partitioned into non=overlapping 4x4 pixel blocks (Coded Pixel Blocks, CPB).
+For each block a pseudo-gradient is computed and if it is higher than a threshold, the block is EP (Edge Patterns), otherwise -- UP (Uniform Patterns).
+In case of EP block 1 bit for each pixel is sent along with mean and G.
+For UP blocks only the mean is sent. A flag bit is used to indicate wether a block is EP or UP.
+
+The raw image is assambled as either a uniform block with the mean value or the sum of a uniform block and the bipolar bit-pattern, B, scaled by the pseudo-gradient coefficient, G. Final decoded image is obtrained by performing a simple 3-by-3 averaging filter over the raw image.
+
+Redundancy in the address vector is suppressed with several CPBs being sent together with their relative addresses coded by run-length coding.
+
+The scheme's performance improves for images with less high frequency content at its global level.
+
+\section{The Event-Camera Dataset and Simulator: Event-based Data for Pose Estimation, Visual Odometry and SLAM}
+A collection of datasets captured with a DABIS in a variety of synthetic and real environments. 
+In addition to global-shutter intensity images and asynchronous events, inertial measurements and ground-truth camera poses from a motion-capture system are provided.
+
+Furthermore, an open-source simulator to create synthetic event-camera data is described.
+
+\section{High Speed and High Dynamic Range Video with an Event Camera}
+!Code available!
+
+Basically this is a good re-write of the "Events-to-Video: Bringing Modern Computer Graphics to Event Cameras" paper.
+
+Contains more information on network architectuer, post processing, color video reconstruction and applications.
 
 
 \end{document}
