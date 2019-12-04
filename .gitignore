@@ -108,3 +108,6 @@ venv.bak/
 **.log
 **.swp
 summary.pdf
+
+.gitmodules
+related_work
