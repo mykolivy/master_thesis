@@ -13,7 +13,7 @@ Representations compared:
 	- mp4: compressed raw file with h.264 codec
 	- aer: Address-Event representation of the sequence
 	- caer: Compact Address-Event representation of the sequence (explained
-	  later in CAER format section)
+	  later in CAER format section) - it is AER with reordering
 	- raw.paq: raw format compressed with PAQ
 	- aer.paq: aer format compressed with PAQ
 	- caer.paq: caer format compressed with PAQ
@@ -28,7 +28,32 @@ Results (file sizes in bytes):
 	aer.paq      104            24       678_243       3_172
 	caer.paq      63            25       657_545       1_392
 
+AER representation achieves better compression than the baseline (h.264) only in
+single_color sequence. All the others produce file sizes significantly larger
+than the baseline, so additional entropy coding is necessary.
+
+Simply applying PAQ directly to the raw sequence results in performance boost
+compared to the baseline.
+
+Applying additional entropy coder (PAQ) to AER representations of all sequences 
+results in considerable boost in performance compared to the baseline (h.264).
+
+The question is how much of this success is due to AER representation and how
+much to PAQ.
+
+Comparing raw.paq values and aer.paq values in the table we can deduce that for
+less dynamic sequences (with less events) it makes sense to use 
+AER representation before applying PAQ, as it leads to increase in performance.
+However, for dynamic sequences such as random_pixels and checkers, transforming 
+to AER representation leads to degraded performance than direct PAQ application.
+
+In all circumstances CAER format leads to better performance compared to AER.
+The only exception is single_color sequence, where CAER file is twice as big as
+its AER counterpart due to additional zero bytes (explained in CAER format
+section).
+
 CAER format:
+This format is simply a reordered AER.
 	Problem with AER: 
 		It is costly to store (x,y) location of each event.
 	Observation: 
@@ -43,4 +68,9 @@ CAER format:
 		+ Only timestamp and delta is stored for each event
 		- For pixels whose value never changes we still need to store a single
 		  0-byte
-	
+
+SUMMARY
+	+ Additional entropy coding on top of AER representation is required to
+	  achive performance comparable to the baseline (h.264)
+    + Use of AER is viable only if the sequence to be compressed is to some
+	  (undetermined) degree static (don't change too rapidly)
