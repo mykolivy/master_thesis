@@ -2,7 +2,7 @@
 
 #./moving_edge
 #./moving_edge method resolution fps duration output_name
-# method can be one of [moving_edge,pixel_random,single_color]
+# method can be one of [moving_edge,pixel_random,single_color,checkers]
 
 from PIL import Image
 import numpy as np
@@ -106,13 +106,53 @@ def pixel_random(resolution, image_num, raw_file, aer_file, caer_file):
     # Write compact AER data
     save_compact_frames(arranged, caer_file)
 
+def checker_matrix(resolution, even=True):
+    mat = np.zeros((resolution, resolution))
+    if even:
+        for row in mat[0::2]:
+            row[0::2] = 255
+        for row in mat[1::2]:
+            row[1::2] = 255
+    else:
+        for row in mat[0::2]:
+            row[1::2] = 255
+        for row in mat[1::2]:
+            row[0::2] = 255
+
+    return mat
+
+def checkers(resolution, image_num, raw_file, aer_file, caer_file):
+    data_even = checker_matrix(resolution, True)
+    data_odd = checker_matrix(resolution, False)
+    arranged = [[[] for y in range(0,resolution)] for x in range(0,resolution)]
+    # save first frame
+    save_frame(raw_file, data_even)
+    save_frame(aer_file, data_even)
+    save_frame(caer_file, data_even)
+    prev = data_even
+    data = data_odd
+    for t in range(1,image_num):
+        if t%2 == 0:
+            data = data_even
+            prev = data_odd
+        else:
+            data = data_odd
+            prev = data_even
+        save_frame(raw_file, data)
+        save_event_frame(np.subtract(data, prev), t, aer_file)
+        add_compact_frame(np.subtract(data, prev), t, arranged)
+        Image.fromarray(np.uint8(data)).save(f'{out_name}/img_{t}.pgm')
+            # Write compact AER data
+    save_compact_frames(arranged, caer_file)
+
+
 resolution = 64
 fps = 30
 duration = 5
 np.random.seed(seed=0)
 sequence = None
 sequences = {'moving_edge': moving_edge, 'pixel_random': pixel_random, 
-             'single_color': single_color}
+        'single_color': single_color, 'checkers': checkers}
 
 if len(sys.argv) == 6:
     sequence = sys.argv[1]
@@ -142,7 +182,7 @@ image_num = fps*duration
 sequences[sequence](resolution, image_num, raw_file, aer_file, caer_file)
 
 # Generate baseline using h.264 codec
-subprocess.run(f"ffmpeg -f image2 -framerate 30 -i {out_name}/img_%d.pgm -c:v libx264 -preset veryslow -qp 18 -pix_fmt gray {out_name}.mp4".split())
+subprocess.run(f"ffmpeg -f image2 -framerate 30 -i {out_name}/img_%d.pgm -c:v libx264 -preset veryslow -crf 0 -pix_fmt gray {out_name}.mp4".split())
 
 shutil.rmtree(out_name)
 raw_file.close()

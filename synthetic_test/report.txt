@@ -5,23 +5,28 @@ Created 3 synthetic sequences (5 sec, 30 fps, 64x64 pix):
 	- moving edge sequence: white edge moves from left to right over dark
 	  background
 	- random pixel sequence: each pixel values set independently for each frame
+	- checkers sequence: pixels arranged in checkerboard pattern, values are
+	  inverted with each frame
 
-4 sequence representations compared:
+Representations compared:
 	- raw: raw format, all frames concatenated to each other
 	- mp4: compressed raw file with h.264 codec
 	- aer: Address-Event representation of the sequence
 	- caer: Compact Address-Event representation of the sequence (explained
 	  later in CAER format section)
+	- raw.paq: raw format compressed with PAQ
+	- aer.paq: aer format compressed with PAQ
+	- caer.paq: caer format compressed with PAQ
 
 Results (file sizes in bytes):
-	      moving_edge  single_color  random_pixels
-	raw      614_409       614_409       614_409
-	mp4        5_832         4_797       492_568
-	aer       61_449         4_105     8_515_167
-	caer      32_777         8_201     3_655_799
-    raw.paq      267           241       614_755
-	aer.paq      104            24       678_243
-	caer.paq      63            25       657_545
+	      moving_edge  single_color  random_pixels  checkers
+	raw      614_409       614_409       614_409     614_409
+	mp4        6_629         5_664       876_417      13_966
+	aer       61_449         4_105     8_515_167   8_548_361
+	caer      32_777         8_201     3_655_799   3_670_025
+    raw.paq      267           241       614_755         285
+	aer.paq      104            24       678_243       3_172
+	caer.paq      63            25       657_545       1_392
 
 CAER format:
 	Problem with AER: 
