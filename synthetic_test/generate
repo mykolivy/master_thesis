@@ -1,0 +1,21 @@
+#!/bin/bash
+
+echo Generating sequences
+./synthetic.py moving_edge
+./synthetic.py pixel_random
+./synthetic.py single_color
+
+echo PAQ moving edge sequences
+./paq -8 moving_edge.raw
+./paq -8 moving_edge.aer
+./paq -8 moving_edge.caer
+
+echo PAQ pixel random sequences
+./paq -8 pixel_random.raw
+./paq -8 pixel_random.aer
+./paq -8 pixel_random.caer
+
+echo PAQ single color sequences
+./paq -8 single_color.raw
+./paq -8 single_color.aer
+./paq -8 single_color.caer
