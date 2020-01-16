@@ -123,6 +123,7 @@ end = 1
 image_num = fps*duration
 while abs(paq_raw_size - paq_caer_size) > precision:
     rate = start + (end - start) / 2
+    print(f"=============== RATE {rate} ===============")
     out_name = f"seq_{rate}"
     os.mkdir(out_name)
 
@@ -158,7 +159,11 @@ while abs(paq_raw_size - paq_caer_size) > precision:
 
         log(rate, raw_size, aer_size, caer_size, 
             paq_raw_size, paq_aer_size, paq_caer_size, log_file)
+        diff = abs(paq_raw_size - paq_caer_size)
+        print(f"=============== RATE {rate} | DIFF {diff} ===============")
 
     if paq_raw_size > paq_caer_size:
         start = start + (end - start) / 2
+    else:
+        end = start + (end - start) / 2
         
