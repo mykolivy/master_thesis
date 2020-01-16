@@ -96,6 +96,11 @@ def random_change(resolution, image_num, rate, raw_file, aer_file, caer_file):
     # Write compact AER data
     save_compact_frames(arranged, caer_file)
 
+def log(rate, raw_size, aer_size, caer_size, 
+        raw_paq_size, aer_paq_size, caer_paq_size, out):
+    out.write(f"raw.paq size: {paq_raw_size}\naer.paq size: {paq_aer_size}\ncaer.paq size: {paq_caer_size}")
+    out.write(f"raw size: {raw_size}\naer size: {aer_size}\ncaer size: {caer_size}")
+    
 resolution = 64
 fps = 30
 duration = 5
@@ -109,17 +114,25 @@ if len(sys.argv) == 5:
 elif len(sys.argv) != 1:
     exit('Error: illegal parameters')
 
-rate = 0.1
-aer_rate = 0
-baseline_rate = 1
+
+precision = 10
+paq_raw_size = precision + 1
+paq_caer_size = 0 
+start = 0
+end = 1
 image_num = fps*duration
-while aer_rate <= baseline_rate:
+while abs(paq_raw_size - paq_caer_size) > precision:
+    rate = start + (end - start) / 2
     out_name = f"seq_{rate}"
     os.mkdir(out_name)
-    
-    with open(f"{out_name}/{out_name}.raw", "ab+") as raw_file,  \
-         open(f"{out_name}/{out_name}.aer", "ab+") as aer_file, \
-         open(f"{out_name}/{out_name}.caer", "ab+") as caer_file:
+
+    raw_name = f"{out_name}/{out_name}.raw" 
+    aer_name = f"{out_name}/{out_name}.aer" 
+    caer_name = f"{out_name}/{out_name}.caer" 
+    with open(raw_name, "ab+") as raw_file,  \
+         open(aer_name, "ab+") as aer_file, \
+         open(caer_name, "ab+") as caer_file, \
+         open(f'{out_name}.log', "w+") as log_file:
         create_raw_file(raw_file, resolution, fps, duration)
         create_raw_file(aer_file, resolution, fps, duration)
         create_raw_file(caer_file, resolution, fps, duration)
@@ -128,8 +141,24 @@ while aer_rate <= baseline_rate:
 
         # Generate baseline using h.264 codec
         subprocess.run(f"ffmpeg -f image2 -framerate 30 -i {out_name}/img_%d.pgm -c:v libx264 -preset veryslow -crf 0 -pix_fmt gray {out_name}/{out_name}.mp4".split())
-
+        
         #shutil.rmtree(out_name)
 
-    aer_rate = 1
-    baseline_rate = 0
+        os.system(f'./paq -8 {raw_name}')
+        os.system(f'./paq -8 {aer_name}')
+        os.system(f'./paq -8 {caer_name}')
+        
+        raw_size = os.path.getsize(raw_name)
+        aer_size = os.path.getsize(aer_name)
+        caer_size = os.path.getsize(caer_name)
+
+        paq_raw_size = os.path.getsize(f'{raw_name}.paq8px183')
+        paq_aer_size = os.path.getsize(f'{aer_name}.paq8px183')
+        paq_caer_size = os.path.getsize(f'{caer_name}.paq8px183')
+
+        log(rate, raw_size, aer_size, caer_size, 
+            paq_raw_size, paq_aer_size, paq_caer_size, log_file)
+
+    if paq_raw_size > paq_caer_size:
+        start = start + (end - start) / 2
+        
