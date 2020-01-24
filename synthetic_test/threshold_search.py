@@ -60,21 +60,27 @@ def save_event_frame(diff, t, out):
                 out.write(i.to_bytes(4, byteorder='big', signed=False))
                 out.write(j.to_bytes(4, byteorder='big', signed=False))
                 out.write(t.to_bytes(4, byteorder='little', signed=False))
-                out.write((int(value)).to_bytes(2, byteorder='big', signed=True))
+                if value >= 0:
+                    out.write(int(1).to_bytes(1, byteorder='big', signed=False))
+                else:
+                    out.write(int(2).to_bytes(1, byteorder='big', signed=False))
 
 def add_compact_frame(diff, t, arranged):
     for i, row in enumerate(diff):
         for j, value in enumerate(row):
             if value != 0:
                 arranged[i][j].append(t) 
-                arranged[i][j].append(int(value))
+                if value >= 0:
+                    arranged[i][j].append(int(1))
+                else:
+                    arranged[i][j].append(int(2))
 
 def save_compact_frames(arranged, out):
     for row in arranged:
         for x in row:
             for i in range(0,len(x),2):
                 out.write(x[i].to_bytes(4, byteorder='little', signed=False))
-                out.write(x[i+1].to_bytes(2, byteorder='big', signed=True))
+                out.write(x[i+1].to_bytes(1, byteorder='big', signed=False))
             out.write(int(0).to_bytes(1, byteorder='big', signed=False))
 
 def random_change(resolution, image_num, rate, raw_file, aer_file, caer_file):
@@ -98,8 +104,9 @@ def random_change(resolution, image_num, rate, raw_file, aer_file, caer_file):
 
 def log(rate, raw_size, aer_size, caer_size, 
         raw_paq_size, aer_paq_size, caer_paq_size, out):
-    out.write(f"raw.paq size: {paq_raw_size}\naer.paq size: {paq_aer_size}\ncaer.paq size: {paq_caer_size}")
-    out.write(f"raw size: {raw_size}\naer size: {aer_size}\ncaer size: {caer_size}")
+    out.write(f"RATE: {rate}\n")
+    out.write(f"raw size: {raw_size}\naer size: {aer_size}\ncaer size: {caer_size}\n")
+    out.write(f"raw.paq size: {paq_raw_size}\naer.paq size: {paq_aer_size}\ncaer.paq size: {paq_caer_size}\n")
     
 resolution = 64
 fps = 30
@@ -119,7 +126,7 @@ precision = 10
 paq_raw_size = precision + 1
 paq_caer_size = 0 
 start = 0
-end = 1
+end = 1 
 image_num = fps*duration
 while abs(paq_raw_size - paq_caer_size) > precision:
     rate = start + (end - start) / 2
@@ -145,17 +152,17 @@ while abs(paq_raw_size - paq_caer_size) > precision:
         
         #shutil.rmtree(out_name)
 
-        os.system(f'./paq -8 {raw_name}')
-        os.system(f'./paq -8 {aer_name}')
-        os.system(f'./paq -8 {caer_name}')
+        os.system(f'./paq -8 {raw_name} {raw_name}.paq')
+        os.system(f'./paq -8 {aer_name} {aer_name}.paq')
+        os.system(f'./paq -8 {caer_name} {caer_name}.paq')
         
         raw_size = os.path.getsize(raw_name)
         aer_size = os.path.getsize(aer_name)
         caer_size = os.path.getsize(caer_name)
 
-        paq_raw_size = os.path.getsize(f'{raw_name}.paq8px183')
-        paq_aer_size = os.path.getsize(f'{aer_name}.paq8px183')
-        paq_caer_size = os.path.getsize(f'{caer_name}.paq8px183')
+        paq_raw_size = os.path.getsize(f'{raw_name}.paq')
+        paq_aer_size = os.path.getsize(f'{aer_name}.paq')
+        paq_caer_size = os.path.getsize(f'{caer_name}.paq')
 
         log(rate, raw_size, aer_size, caer_size, 
             paq_raw_size, paq_aer_size, paq_caer_size, log_file)

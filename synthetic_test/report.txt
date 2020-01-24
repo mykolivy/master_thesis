@@ -1,7 +1,7 @@
 Synthetic tests report
 
-Created 3 synthetic sequences (5 sec, 30 fps, 64x64 pix):
-	- single color sequence: all frames are the same
+Created 4 synthetic sequences (5 sec, 30 fps, 64x64 pix):
+	- single color sequence: all frames are the same solid black color
 	- moving edge sequence: white edge moves from left to right over dark
 	  background
 	- random pixel sequence: each pixel values set independently for each frame
@@ -10,7 +10,7 @@ Created 3 synthetic sequences (5 sec, 30 fps, 64x64 pix):
 
 Representations compared:
 	- raw: raw format, all frames concatenated to each other
-	- mp4: compressed raw file with h.264 codec
+	- h.264: compressed raw file with h.264 codec
 	- aer: Address-Event representation of the sequence
 	- caer: Compact Address-Event representation of the sequence (explained
 	  later in CAER format section) - it is AER with reordering
@@ -21,7 +21,7 @@ Representations compared:
 Results (file sizes in bytes):
 	      moving_edge  single_color  random_pixels  checkers
 	raw      614_409       614_409       614_409     614_409
-	mp4        6_629         5_664       876_417      13_966
+	h.264      6_629         5_664       876_417      13_966
 	aer       61_449         4_105     8_515_167   8_548_361
 	caer      32_777         8_201     3_655_799   3_670_025
     raw.paq      267           241       614_755         285
@@ -73,4 +73,4 @@ SUMMARY
 	+ Additional entropy coding on top of AER representation is required to
 	  achive performance comparable to the baseline (h.264)
     + Use of AER is viable only if the sequence to be compressed is to some
-	  (undetermined) degree static (don't change too rapidly)
+	  (undetermined) degree static (doesn't change too rapidly)
