@@ -11,6 +11,7 @@ import os
 import subprocess
 import shutil
 import random
+import events
 
 def invert(val):
     if val == 0:
@@ -43,64 +44,24 @@ class Frame:
         population = range(0, res_sq)
         self.set_from_events(random.sample(population, num))
 
-def create_raw_file(f, resolution, fps, duration):
-    f.write((resolution).to_bytes(4, byteorder='big'))
-    f.write((fps).to_bytes(1, byteorder='big'))
-    f.write((duration).to_bytes(4, byteorder='big'))
-
-def save_frame(out, data):
-    for row in np.uint8(data):
-        for j in row:
-            out.write(int(j).to_bytes(1, byteorder='big'))
-        
-def save_event_frame(diff, t, out):
-    for i, row in enumerate(diff):
-        for j, value in enumerate(row):
-            if value != 0:
-                out.write(i.to_bytes(4, byteorder='big', signed=False))
-                out.write(j.to_bytes(4, byteorder='big', signed=False))
-                out.write(t.to_bytes(4, byteorder='little', signed=False))
-                if value >= 0:
-                    out.write(int(1).to_bytes(1, byteorder='big', signed=False))
-                else:
-                    out.write(int(2).to_bytes(1, byteorder='big', signed=False))
-
-def add_compact_frame(diff, t, arranged):
-    for i, row in enumerate(diff):
-        for j, value in enumerate(row):
-            if value != 0:
-                arranged[i][j].append(t) 
-                if value >= 0:
-                    arranged[i][j].append(int(1))
-                else:
-                    arranged[i][j].append(int(2))
-
-def save_compact_frames(arranged, out):
-    for row in arranged:
-        for x in row:
-            for i in range(0,len(x),2):
-                out.write(x[i].to_bytes(4, byteorder='little', signed=False))
-                out.write(x[i+1].to_bytes(1, byteorder='big', signed=False))
-            out.write(int(0).to_bytes(1, byteorder='big', signed=False))
-
 def random_change(resolution, image_num, rate, raw_file, aer_file, caer_file):
     data = np.zeros((resolution, resolution))
     prev = data.copy()
     frame = Frame([], data)
     arranged = [[[] for y in range(0,resolution)] for x in range(0,resolution)]
     # save first frame
-    save_frame(raw_file, frame.val)
-    save_frame(aer_file, frame.val)
-    save_frame(caer_file, frame.val)
+    events.save_frame(raw_file, frame.val)
+    events.save_frame(aer_file, frame.val)
+    events.save_frame(caer_file, frame.val)
     for t in range(1,image_num):
         frame.change_rand(rate) 
-        save_frame(raw_file, frame.val)
-        save_event_frame(np.subtract(frame.val, prev), t, aer_file)
-        add_compact_frame(np.subtract(frame.val, prev), t, arranged)
+        events.save_frame(raw_file, frame.val)
+        events.save_event_frame(np.subtract(frame.val, prev), t, aer_file)
+        events.add_compact_frame(np.subtract(frame.val, prev), t, arranged)
         Image.fromarray(np.uint8(frame.val)).save(f'{out_name}/img_{t}.pgm')
         prev = frame.val.copy()
     # Write compact AER data
-    save_compact_frames(arranged, caer_file)
+    events.save_compact_frames(arranged, caer_file)
 
 def log(rate, raw_size, aer_size, caer_size, 
         raw_paq_size, aer_paq_size, caer_paq_size, out):
@@ -141,9 +102,9 @@ while abs(paq_raw_size - paq_caer_size) > precision:
          open(aer_name, "ab+") as aer_file, \
          open(caer_name, "ab+") as caer_file, \
          open(f'{out_name}.log', "w+") as log_file:
-        create_raw_file(raw_file, resolution, fps, duration)
-        create_raw_file(aer_file, resolution, fps, duration)
-        create_raw_file(caer_file, resolution, fps, duration)
+        events.create_raw_file(raw_file, resolution, fps, duration)
+        events.create_raw_file(aer_file, resolution, fps, duration)
+        events.create_raw_file(caer_file, resolution, fps, duration)
 
         random_change(resolution, image_num, rate, raw_file,aer_file,caer_file)
 
