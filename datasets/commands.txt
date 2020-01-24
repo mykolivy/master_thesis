@@ -1,0 +1,2 @@
+To extract frames from video sequence:
+ffmpeg -i input.mkv output_folder/image-%4d.png
