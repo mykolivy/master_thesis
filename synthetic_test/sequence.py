@@ -1,9 +1,10 @@
 import numpy as np
 import random
+import math
 
 class SequenceConfig:
     def __init__(self, resolution, fps, duration):
-        self.res = resolution
+        self.res = list(reversed(resolution))
         self.fps = fps
         self.duration = duration
         self.frame_num = fps * duration
@@ -13,10 +14,12 @@ class MovingEdgeFrameIterator:
     def __init__(self, sequence_config):
         self.conf = sequence_config
         self.index = 1
-        self.data = np.zeros((self.conf.res, self.conf.res))
+        self.data = np.zeros(self.conf.res)
         self.start_frame = self.data.copy()
-        self.move_ratio = int(self.conf.frame_num / self.conf.res)
-        self.row = np.zeros(self.conf.res)
+        self.move_ratio = self.conf.res[1] / self.conf.frame_num 
+        self.position = 0
+        self.row = np.zeros(self.conf.res[1])
+        print(self.data.shape)
         self.col_index = 0
 
     def __iter__(self):
@@ -25,10 +28,13 @@ class MovingEdgeFrameIterator:
     def __next__(self):
         if self.index == self.conf.frame_num:
             raise StopIteration
-        if self.index % self.move_ratio == 0:
-            for i in range(0,self.conf.res):
-                self.data[i][self.col_index] = 255
-            self.col_index=(self.col_index+1)%self.conf.res
+        self.position += self.move_ratio
+        if self.index == 1:
+            self.data = self.start_frame.copy()
+        else:
+            for i in range(0,self.conf.res[0]):
+                self.data[i][:int(self.position)] = 255
+            self.col_index=(self.col_index+1)%self.conf.res[1]
         self.index += 1
         return self.data
 
@@ -38,7 +44,7 @@ class SingleColorFrameIterator:
     def __init__(self, value, sequence_config):
         self.conf = sequence_config
         self.index = 1
-        self.frame = np.full((self.conf.res, self.conf.res), value)
+        self.frame = np.full((self.conf.res), value)
         self.start_frame = self.frame
 
     def __iter__(self):
@@ -70,7 +76,7 @@ class RandomPixelFrameIterator:
 
     def rand_frame(self):
         return np.random.randint(self.value_range[0], high=self.value_range[1],
-               size=(self.conf.res, self.conf.res))
+               size=self.conf.res)
 
 class CheckersFrameIterator:
     """Produces consequent frames of checkerboard pattern with each iteration"""
@@ -94,7 +100,7 @@ class CheckersFrameIterator:
         return result
 
     def frame(self, even):
-        mat = np.zeros((self.conf.res, self.conf.res))
+        mat = np.zeros(self.conf.res)
         if even:
             for row in mat[0::2]:
                 row[0::2] = 255
@@ -113,7 +119,7 @@ class RandomBinaryChangeFrameIterator:
     def __init__(self, rate, sequence_config):
         self.conf = sequence_config
         self.index = 1
-        self.start_frame = np.zeros((self.conf.res, self.conf.res))
+        self.start_frame = np.zeros(self.conf.res)
         self.val = self.start_frame.copy()
         self.events = {} 
         self.rate = rate
@@ -131,12 +137,12 @@ class RandomBinaryChangeFrameIterator:
     def set_from_events(self, events):
         self.events = events.copy()
         for event in events:
-            i = int(event / self.conf.res)
-            j = event - i*self.conf.res
+            i = int(event / self.conf.res[1])
+            j = event - i*self.conf.res[1]
             self.val[i][j] = RandomBinaryChangeFrameIterator.invert(self.val[i][j])
 
     def change_rand(self, rate):
-        res_sq = self.conf.res * self.conf.res
+        res_sq = self.conf.res[0] * self.conf.res[1]
         num = int(res_sq * rate)
         population = range(0, res_sq)
         self.set_from_events(random.sample(population, num))
