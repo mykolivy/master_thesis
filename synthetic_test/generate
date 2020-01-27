@@ -1,0 +1,12 @@
+#!/bin/bash
+#./generate method resolution fps duration output_folder
+
+echo Generating sequences
+./synthetic.py $1 $2 $3 $4 $5.raw
+./synthetic.py $1 $2 $3 $4 $5.aer
+./synthetic.py $1 $2 $3 $4 $5.caer
+
+echo Compressing with PAQ
+./lpaq1 0 $5.raw $5.raw.lpaq1
+./lpaq1 0 $5.aer $5.aer.lpaq1
+./lpaq1 0 $5.caer $5.caer.lpaq1

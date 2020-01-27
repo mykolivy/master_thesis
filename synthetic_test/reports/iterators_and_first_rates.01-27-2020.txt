@@ -1,0 +1,39 @@
+Definitions:
+	event rate - for a video, average percentage of pixels changing values from
+in each frame
+	performance threshold - maximum rate, at which caer representation + entropy
+coder improves compression ratio compared to plain entropy coder application
+
+1. Modified codebase to make it more extendable
+2. Incorporated lpaq1 and evaluated performance threshold for it
+	- Threshold dropped from ~40% to ~36% (compared to regular paq on 64x64
+	  resolution)
+3. Ran same search on larger resolution sequences 
+	+ Threshold depends on the resolution
+	+ Threshold increases for larger resolutions
+	+ Threshold increased to ~37.7% (128x128 resolution)
+	+ Threshold increased to ~38% (256x256 resolution)
+	- Threshold increase doesn't scale linearly with resolution (this
+	  will be studied more thoroughly in the near future)
+4. Found 3 interesting video datasets:
+	+ VIRAT (https://viratdata.org/) - surveillance video dataset
+	+ SynTex (https://ieeexplore.ieee.org/document/8803798) - synthetic video
+dataset 
+	+ YouTube UGC (https://arxiv.org/abs/1904.06457) - database of
+user-generated content from youtube. Contains an interesting idea that artifacts
+in unproffessional videos shouldn't be reconstructed by decoder. An evaluation
+method for reconstruction with no-reference objective is proposed
+5. Downloaded 13 random videos from youtube dataset and computed average rate of
+change for each of them 
+	+ 4 out of 13 videos had very low rate (~24-26%), which is far below the
+threshold determined earlier. These are videos with stable camera postition and
+static background (podcast, kids playing table tennis...)
+
+Summary:
+Video resolution influences performance threshold.
+Entropy coder influences performance threshold.
+There exist user-generated videos for which the event rate is in good operating
+range.
+
+Use of event representation remains promising for sertain types of
+user-generated sequences and for video survailance

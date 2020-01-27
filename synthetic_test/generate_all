@@ -1,0 +1,7 @@
+#!/bin/bash
+#./generate_all resolution fps duration output_folder
+
+./generate moving_edge $1 $2 $3 $4/moving_edge
+./generate single_color $1 $2 $3 $4/single_color
+./generate checkers $1 $2 $3 $4/checkers
+./generate random_pixel $1 $2 $3 $4/random_pixel

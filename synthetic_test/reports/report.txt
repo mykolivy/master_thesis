@@ -1,0 +1,76 @@
+Synthetic tests report
+
+Created 4 synthetic sequences (5 sec, 30 fps, 64x64 pix):
+	- single color sequence: all frames are the same solid black color
+	- moving edge sequence: white edge moves from left to right over dark
+	  background
+	- random pixel sequence: each pixel values set independently for each frame
+	- checkers sequence: pixels arranged in checkerboard pattern, values are
+	  inverted with each frame
+
+Representations compared:
+	- raw: raw format, all frames concatenated to each other
+	- h.264: compressed raw file with h.264 codec
+	- aer: Address-Event representation of the sequence
+	- caer: Compact Address-Event representation of the sequence (explained
+	  later in CAER format section) - it is AER with reordering
+	- raw.paq: raw format compressed with PAQ
+	- aer.paq: aer format compressed with PAQ
+	- caer.paq: caer format compressed with PAQ
+
+Results (file sizes in bytes):
+	      moving_edge  single_color  random_pixels  checkers
+	raw      614_409       614_409       614_409     614_409
+	h.264      6_629         5_664       876_417      13_966
+	aer       61_449         4_105     8_515_167   8_548_361
+	caer      32_777         8_201     3_655_799   3_670_025
+    raw.paq      267           241       614_755         285
+	aer.paq      104            24       678_243       3_172
+	caer.paq      63            25       657_545       1_392
+
+AER representation achieves better compression than the baseline (h.264) only in
+single_color sequence. All the others produce file sizes significantly larger
+than the baseline, so additional entropy coding is necessary.
+
+Simply applying PAQ directly to the raw sequence results in performance boost
+compared to the baseline.
+
+Applying additional entropy coder (PAQ) to AER representations of all sequences 
+results in considerable boost in performance compared to the baseline (h.264).
+
+The question is how much of this success is due to AER representation and how
+much to PAQ.
+
+Comparing raw.paq values and aer.paq values in the table we can deduce that for
+less dynamic sequences (with less events) it makes sense to use 
+AER representation before applying PAQ, as it leads to increase in performance.
+However, for dynamic sequences such as random_pixels and checkers, transforming 
+to AER representation leads to degraded performance than direct PAQ application.
+
+In all circumstances CAER format leads to better performance compared to AER.
+The only exception is single_color sequence, where CAER file is twice as big as
+its AER counterpart due to additional zero bytes (explained in CAER format
+section).
+
+CAER format:
+This format is simply a reordered AER.
+	Problem with AER: 
+		It is costly to store (x,y) location of each event.
+	Observation: 
+		Vast majority of pixels in video sequences change their values at least
+		once.
+	Idea:
+		Avoid storing locations -> CAER.
+	Implementation:
+		+ Save all event data for each pixel in sequence: left-to-right,
+		  top-to-bottom.
+		+ Denote the end of event stream for pixel by 0 byte.
+		+ Only timestamp and delta is stored for each event
+		- For pixels whose value never changes we still need to store a single
+		  0-byte
+
+SUMMARY
+	+ Additional entropy coding on top of AER representation is required to
+	  achive performance comparable to the baseline (h.264)
+    + Use of AER is viable only if the sequence to be compressed is to some
+	  (undetermined) degree static (doesn't change too rapidly)
