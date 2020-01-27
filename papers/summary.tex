@@ -1,0 +1,279 @@
+\documentclass[10pt,a4paper]{article} \author{Yaroslav Mykoliv} \title{EVENT
+CAMERA PAPER SUMMARIES} \begin{document} \maketitle
+%\tableofcontents
+
+\section{Event-based Vision: A Survey} \paragraph{} Event cameras don't capture
+images at a fixed rate, instead they measure per-pixel brightness changes
+asynchronously.  The results is a stream of events with information about time,
+location and sign of the brightness changes.
+
+The advantages of the event cameras over the traditional ones are:
+\begin{itemize} \item high temporal resolution, no motion blur \item high
+dynamic range \item low power consumption \item no latency \end{itemize}
+	\subsection{}
+
+The paper is a survey on the current problems and applications of event-based
+vision, which probably requires novel computer vision algorithms. 
+
+\section{Events-to-Video: Bringing Modern Computer Vision to Event Cameras}
+!Implemented in PyTorch, but so far I failed to find the source code!
+
+In this paper authors establish a bridge between vision with event cameras and
+conventional computer vision.  A U-Net network architecture is used to
+reconstruct natural videos from a stream of events, trained on a large quantity
+of simulated event sequences with corresponding ground-truth images.  After
+this, off-the-shelf computer vision algorithms that were built to process
+conventional images are applied for object classification and visual-inertial
+odometry problems.
+
+It is noted that events cannot be directly integrated to recover accurate
+intensity images in practice.  Events are represented as a spatio-temporal voxel
+grid, which introduces some latency due to processing of events in windows.
+
+The training data was generated from MS-COCO images by first mapping those to a
+3D plane, with events triggered by random camera motion within the scene. The
+network is trained on simulated data, but is shown to generalize well to real
+event data.
+
+The network itself features residual blocks as well as a recurrent connection to
+propagate intensity  information forward in time.  It does not need to
+reconstruct a new image from scratch at every time step, but only to
+incrementally update the previous reconstructions using the new sequence of
+events.
+
+The objective is to minimize the calibrated perceptual loss (LPIPS), which
+averages the distances between VGG features computed across multiple layers. By
+minimizing this loss, the network essentially learns to endow the reconstructed
+images with natural statistics. It is important to note that instead of focusing
+mainly on the quality of the reconstructions, the authors build their approach
+with the goal of applying standard computer vision techniques to the
+reconstructions.
+
+\section{A QVGA 143 dB Dynamic Range Frame-Free PWM Image Sensor With Lossless
+Pixel-Level Video Compression and Time-Domain CDS} \paragraph{} Presents ATIS
+(asynchronous time-based image sensor), which combines event- and frame-based
+(exposure) information.  In short, each pixel is a combination of DVS-like
+change detector and a conditional exposure measurement unit.
+
+It achieves highly efficient sensor-driven ideally lossless video compression,
+by suppressing temporal redundancy using asynchronous pixel change detections.
+Subsequently, an asynchronous event-based communication scheme (Address Even
+Representation) is used in order to provide efficient allocation of the
+transmission channel.
+
+Ideally, the redundant data is not recorded at all. In practice, however, due to
+static background noise is usually present, which limits achievable video
+compression factor.  Without considering noise, compression factors depend only
+on scene dynamics.
+
+\section{Real-Time, High-Speed Video Decompression Using a Frame- and
+Event-based DAVIS Sensor} Considers event data as natively-compressed.  Proposes
+first real-time event decompression algorithm for the DAVIS.  Events are
+processed one by one, not in batches.  Essentially this paper considers
+reconstruction problem in decompression scenario.  DAVIS produces an
+asynchronous stream of events which encode changes in the pixel brightness and
+at any point in time an exposure can be started, resulting in the output of a
+standard still image.
+
+The proposed method for decompression relies on integration of subsequent
+intensity steps on arrival of each event (in log-domain).  This leads to an
+error build-up from brightness update per event originating from the inter-pixel
+mismatch of the ON/OFF thresholds.  The counter measure against this error
+build-up the sampled still images are used in the following way: 1. The event
+update steps are updated according to the decompression error of the resulting
+decompressed image and the next still image 2. The reconstructions starts anew
+from the still image, preventing the error buildup (decompression error is
+reset)
+
+Main drawback: the high reconstruction error even in-between subsequent still
+images.
+
+\section{High-DR Frame-Free PWM Imaging with asynchronous AER Intensity Encoding
+and Focal Plane Temporal Redundancy Suppression} Presents asynchronous
+time-based image sensor (ATIS).  Contains nice outline of motivation of the
+sensor and its concept.
+
+Argues that the sensor natively realizes optimal lossless pixel-level video
+compression through temporal redundancy suppression.
+
+\section{Real-Time, Near-Lossless, Energy-Constrained Compression Method for
+High Frame Rate Videos} Not a very good paper that mentions DAVIS, but has
+little to do with it.
+
+Presents a simple video compression method, containing predictor (next frame is
+predicted to be the same as the previous one), quantizer (3 different quantizers
+are considered) and entropy coder (Huffman).
+
+The interesting part is that they pick the parameters for the model by energy
+minimization, which contains 3 terms: distortion, bitrate and computation
+effort.  Instead of gradient descent, a weird parameter search algorithm is
+used. No notion of well posedness or optimality of the solution are considered.
+
+TODO: read the referenced paper, they took the optimization method from
+
+\section{Asynchronous Spatial Image Convolutions for Event Cameras} \paragraph{}
+Proposes a method to compute the convolution of a linear spatial kernel with the
+output of an event camera which directly operates on the event stream without
+the need for reconstruction of intensity frames.  An internal state that encodes
+the convolved image information is used. Each of its pixels carries a timestamp
+of the last event that updated that pixel along with the latest state
+information.  The internal state can be separately read off as often as and
+whenever required.
+
+For each pixel the exact analytic solution to the associated ordinary
+differential equation of the filter in continuous time is computed and evaluated
+at discrete time instances.  The process requires integration over events, which
+produces an accumulated error from quantisation and sensor noise.  This in turn
+results in a drift and undermines low temporal-frequency components of the
+convolution estimate over time.  However, it is argued that only high
+temporal-frequency information is relevant.
+
+To this end, a high-pass filter in the frequency domain is employed, which is
+implemented in the time domain via inverse Laplace transform, which requires
+solving a constant coefficient linear differential equation explicitly.  An
+asynchronous distributed pixel-by-pixel update is derived to compute the filter
+state.
+
+It is claimed that a straightforward generalisation of the filter equations
+allows to compute image pyramids as well.
+
+Authours mention possibilities to alternative feature states, continuous-time
+optical flow state, and application of event=based convolutions to convolutional
+neural networks.
+
+TODO: read up on Laplace transform; how is solution to the ODE in the paper
+derived?
+
+\section{Time-Based Compression and Classification of Heartbeats} Proposes
+classification method for ECG recordings on samples from the data (time-based
+representation) and not from reconstructions.
+
+The output from the IF sampler, used in the paper, probably can be interpreted
+as a signal from a single pixel of an event camera.  The samples provide a
+compressed representation for signals in which information is localized in
+high-amplitude transients overlaid on low-amplitude background noise.
+
+A number of reconstruction algorithms for such data is mentioned.  The authors
+have also shown in a previous work that the reconstruction error can be bounded
+in band-limited spaces and perfect recovery is possible in finite-dimensional
+spaces, as long as the sample constraints are satisfied.  Additionaly, a number
+of different representations of the data are mentioned.
+
+\section{Continuous-time Intensity Estimation Using Event Cameras} !Code
+available!
+
+A continuous formulation of event-based intensity estimation using complementary
+filtering to combine image frames with events is presented, using the concept of
+a continuous-time image state that is asynchronously updated with every event.
+Rather than resetting the intensity estimate with arrival of a new frame, the
+formulation retains the high-dynamic-range information from events.
+
+Events are continuous-time signals even though they are not continuous functions
+of time; the time variable on which they depend varies continuously.
+
+A complementary filter is used to to fuse the event field with log-intensity
+frames.  Such filters are ideal for fusing signals that have complementary
+frequency noise characteristics.  Due to high-temporal resolution of events,
+they provide reliable high-frequency information, but their integration
+amplifies low-frequency disturbance (drift).  Classical image frames have poor
+high-frequency fidelity, but provide reliable low-frequency reference intensity
+information.  The proposed asynchronous complementary filter architecture
+combines a high-pass version of event stream with low-pass version of classical
+frames.
+
+The proposed filter is a continuous-time ordinary differential equation. The
+result is derived step-by-step as solutions to this equation at each of the
+timestamps.  The solution for previous time step is used as initial condition
+for the next time-interval.
+
+Inside the ODE there is a parameter that controls the relative information
+contributed by image frames or events.  Authors propose to replace it with a
+function to dynamically adjust the relative dependence on image frames or
+events, which can be useful when image frames are compromised.  The heuristic
+that pixels reporting an intensity close to the minimum or maximum output of the
+camera may be compromised is used.
+
+The proposed method works on both DAVIS-like data and on pure event stream and
+can be used to augment other methods.
+
+\section{Event-driven Video Frame Synthesis} !Code available!
+
+A new high framerate video synthesis framework by fusing intensity frames with
+event streams is introduced.  It contains two steps: Differentiable Model-based
+Reconstruction (DMR) and Residual Denoiser (DR).
+
+Reconstruction is performed by DMR, which fuses event- and frame-based
+information.  It's results may have visual artifacts due to the ill-posedness of
+the fusion problem and different noise levels between the two sensing
+modalities.  To address this, additional DR deep-nn model is added on top to
+denoise the result.
+
+The DMR is performed by minimizing a weighted combination of several loss
+functions: pixel loss, which includes per-pixel difference against intensity and
+event pixels in l1 norm over the entire available data range; and sparsity loss
+- total variation (TV) sparsity in the spatial and temporal dimensions of the
+resulting high-res tensor.  Sparsity loss has two terms: one denoising term for
+intensity tensor and another for event denoising.
+
+For RD authors enforce generated event frames to contain less than 20\% of
+events, which is motivated by a statistical analysis from supplementary material
+of the paper.
+
+The event sensing model requires binning events into frames.  Events happening
+at different locations but at very close timestamps can be processed in the same
+event frame.  Two binning strategies are explored.
+
+The authors mention that existing DAVIS dataset doesn't contain enough sharp
+intensity images captured at high speed for training/fine tuning.  Because of
+that they are planning to use event simulation.
+
+!The paper is a  treasure trove for paper references!
+
+\section{A Low-complexity Image Compression Algorithm for Address-Event
+Representation (AER) PWM Image Sensors}
+
+In this paper a block based image compression algorithm, which exploits the
+intensity-ordered nature of AER image sensors to simultaneously achieve lower
+computational complexity and lower address overhead for individual pixels.
+Under this scheme, the address vector overhead can be dramatically reduced.
+
+The pixels trigger in the descending order of their sensed light intensity.
+
+The scheme is as follows: the image is first partitioned into non=overlapping
+4x4 pixel blocks (Coded Pixel Blocks, CPB).  For each block a pseudo-gradient is
+computed and if it is higher than a threshold, the block is EP (Edge Patterns),
+otherwise -- UP (Uniform Patterns).  In case of EP block 1 bit for each pixel is
+sent along with mean and G.  For UP blocks only the mean is sent. A flag bit is
+used to indicate whether a block is EP or UP.
+
+The raw image is assembled as either a uniform block with the mean value or the
+sum of a uniform block and the bipolar bit-pattern, B, scaled by the
+pseudo-gradient coefficient, G. Final decoded image is obtained by performing a
+simple 3-by-3 averaging filter over the raw image.
+
+Redundancy in the address vector is suppressed with several CPBs being sent
+together with their relative addresses coded by run-length coding.
+
+The scheme's performance improves for images with less high frequency content at
+its global level.
+
+\section{The Event-Camera Dataset and Simulator: Event-based Data for Pose
+Estimation, Visual Odometry and SLAM} A collection of datasets captured with a
+DAVIS in a variety of synthetic and real environments.  In addition to
+global-shutter intensity images and asynchronous events, inertial measurements
+and ground-truth camera poses from a motion-capture system are provided.
+
+Furthermore, an open-source simulator to create synthetic event-camera data is
+described.
+
+\section{High Speed and High Dynamic Range Video with Event Camera} !Code
+available!
+
+Basically this is a good re-write of the "Events-to-Video: Bringing Modern
+Computer Graphics to Event Cameras" paper.
+
+Contains more information on network architecture, post processing, color video
+reconstruction and applications.
+
+
+\end{document}
