@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-#./moving_edge
-#./moving_edge resolution fps duration output_name
-# method can be one of [moving_edge,pixel_random,single_color,checkers]
-
 from PIL import Image
 import numpy as np
 import sys
@@ -58,7 +54,7 @@ def random_change(resolution, image_num, rate, raw_file, aer_file, caer_file):
         events.save_frame(raw_file, frame.val)
         events.save_event_frame(np.subtract(frame.val, prev), t, aer_file)
         events.add_compact_frame(np.subtract(frame.val, prev), t, arranged)
-        Image.fromarray(np.uint8(frame.val)).save(f'{out_name}/img_{t}.pgm')
+        Image.fromarray(np.uint8(frame.val)).save(f'{out_name}/{sub_name}/img_{t}.pgm')
         prev = frame.val.copy()
     # Write compact AER data
     events.save_compact_frames(arranged, caer_file)
@@ -75,9 +71,9 @@ duration = 5
 np.random.seed(seed=0)
 
 if len(sys.argv) == 5:
-    resolution = sys.argv[1]
-    fps = sys.argv[2]
-    duration = sys.argv[3]
+    resolution = int(sys.argv[1])
+    fps = int(sys.argv[2])
+    duration = int(sys.argv[3])
     out_name = sys.argv[4]
 elif len(sys.argv) != 1:
     exit('Error: illegal parameters')
@@ -89,19 +85,26 @@ paq_caer_size = 0
 start = 0
 end = 1 
 image_num = fps*duration
+log_file_name = f'{out_name}.log'
+os.makedirs(os.path.dirname(log_file_name), exist_ok=True)
+log_file = open(log_file_name, "w+")
+sub_name = ''
 while abs(paq_raw_size - paq_caer_size) > precision:
     rate = start + (end - start) / 2
-    print(f"=============== RATE {rate} ===============")
-    out_name = f"seq_{rate}"
-    os.mkdir(out_name)
+    print(f"Rate: {rate}")
+    log_file.write(f"=============== RATE {rate} ===============")
+    sub_name = f"seq_{rate}"
 
-    raw_name = f"{out_name}/{out_name}.raw" 
-    aer_name = f"{out_name}/{out_name}.aer" 
-    caer_name = f"{out_name}/{out_name}.caer" 
+    raw_name = f"{out_name}/{sub_name}.raw" 
+    os.makedirs(os.path.dirname(raw_name), exist_ok=True)
+    aer_name = f"{out_name}/{sub_name}.aer" 
+    os.makedirs(os.path.dirname(aer_name), exist_ok=True)
+    caer_name = f"{out_name}/{sub_name}.caer" 
+    os.makedirs(os.path.dirname(caer_name), exist_ok=True)
+    os.makedirs(os.path.dirname(f"{out_name}/{sub_name}/file.txt"), exist_ok=True)
     with open(raw_name, "ab+") as raw_file,  \
          open(aer_name, "ab+") as aer_file, \
-         open(caer_name, "ab+") as caer_file, \
-         open(f'{out_name}.log', "w+") as log_file:
+         open(caer_name, "ab+") as caer_file:
         events.create_raw_file(raw_file, resolution, fps, duration)
         events.create_raw_file(aer_file, resolution, fps, duration)
         events.create_raw_file(caer_file, resolution, fps, duration)
@@ -109,13 +112,13 @@ while abs(paq_raw_size - paq_caer_size) > precision:
         random_change(resolution, image_num, rate, raw_file,aer_file,caer_file)
 
         # Generate baseline using h.264 codec
-        subprocess.run(f"ffmpeg -f image2 -framerate 30 -i {out_name}/img_%d.pgm -c:v libx264 -preset veryslow -crf 0 -pix_fmt gray {out_name}/{out_name}.mp4".split())
-        
-        #shutil.rmtree(out_name)
+        os.system(f"ffmpeg -f image2 -framerate 30 -i {out_name}/{sub_name}/img_%d.pgm -c:v libx264 -preset veryslow -crf 0 -pix_fmt gray {out_name}/{sub_name}.mp4")
 
-        os.system(f'./paq -8 {raw_name} {raw_name}.paq')
-        os.system(f'./paq -8 {aer_name} {aer_name}.paq')
-        os.system(f'./paq -8 {caer_name} {caer_name}.paq')
+        shutil.rmtree(f'{out_name}/{sub_name}') 
+
+        os.system(f'./lpaq1 0 {raw_name} {raw_name}.paq')
+        os.system(f'./lpaq1 0 {aer_name} {aer_name}.paq')
+        os.system(f'./lpaq1 0 {caer_name} {caer_name}.paq')
         
         raw_size = os.path.getsize(raw_name)
         aer_size = os.path.getsize(aer_name)
@@ -128,10 +131,10 @@ while abs(paq_raw_size - paq_caer_size) > precision:
         log(rate, raw_size, aer_size, caer_size, 
             paq_raw_size, paq_aer_size, paq_caer_size, log_file)
         diff = abs(paq_raw_size - paq_caer_size)
-        print(f"=============== RATE {rate} | DIFF {diff} ===============")
+        log_file.write(f"=============== RATE {rate} | DIFF {diff} ===============")
 
     if paq_raw_size > paq_caer_size:
         start = start + (end - start) / 2
     else:
         end = start + (end - start) / 2
-        
+log_file.close()        

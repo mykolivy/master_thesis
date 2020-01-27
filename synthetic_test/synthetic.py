@@ -20,13 +20,12 @@ duration = 5
 np.random.seed(seed=0)
 out_name = 'default_name'
 method = sys.argv[1]
-format = sys.argv[2].split('.')[-1]
+format = sys.argv[-1].split('.')[-1]
 out_name = '.'.join(sys.argv[-1].split('.')[:-1]) 
-if len(sys.argv) == 8:
-    resolution = sys.argv[3]
-    fps = sys.argv[4]
-    duration = sys.argv[5]
-    out_name = '.'.join(sys.argv[6].split('.')[:-1]) 
+if len(sys.argv) == 6:
+    resolution = int(sys.argv[2])
+    fps = int(sys.argv[3])
+    duration = int(sys.argv[4])
 
 sequence_config = seq.SequenceConfig(resolution, fps, duration)
 frame_iterators = {
