@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+
 *$py.class
 
 # C extensions
@@ -105,7 +106,6 @@ venv.bak/
 
 # 
 **.aux
-**.log
 **.swp
 summary.pdf
 
@@ -115,3 +115,5 @@ datasets/syntex
 datasets/virat
 datasets/youtube_ugc
 synthetic_test/paq8px
+
+!**.log
