@@ -25,7 +25,7 @@ parser.add_argument('-r', '--res', dest='res', action='store', default=[64, 64],
                     nargs=2, type=int,
                     help='Resolution of the generated sequences: y x')
 parser.add_argument('-f', '--fps', dest='fps', action='store', default=30,
-                    help='Framerate of the generated sequences')
+                    help='Framerate of the generated sequences', type=int)
 parser.add_argument('-d', '--duration', dest='duration', action='store',
                     type=int, default=5,
                     help='Duration of the generated sequences')
@@ -65,7 +65,7 @@ if format == 'raw':
     for i, frame in enumerate(frame_iterator):
         events.save_frame(out, frame)
         Image.fromarray(np.uint8(frame)).save(f'{out_name}/img_{i}.pgm')
-    subprocess.run(f"ffmpeg -f image2 -framerate 30 -i {out_name}/img_%d.pgm -c:v libx264 -preset veryslow -crf 0 -pix_fmt gray {out_name}.mp4".split())
+    os.system(f"ffmpeg -f image2 -framerate 30 -i {out_name}/img_%d.pgm -c:v libx264 -preset veryslow -crf 0 -pix_fmt gray {out_name}.mp4")
     shutil.rmtree(out_name)
 else:
     format_iterator = format_iterators[format]
