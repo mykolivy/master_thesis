@@ -1,7 +1,8 @@
 import numpy as np
 
 def create_raw_file(f, resolution, fps, duration):
-    f.write((resolution).to_bytes(4, byteorder='big'))
+    f.write((resolution[0]).to_bytes(4, byteorder='big'))
+    f.write((resolution[1]).to_bytes(4, byteorder='big'))
     f.write((fps).to_bytes(1, byteorder='big'))
     f.write((duration).to_bytes(4, byteorder='big'))
 
@@ -89,7 +90,7 @@ class CAERIterator:
                 yield result
 
     def compute_compact_frames(self):
-        self.arranged = [[[] for y in range(self.res)] for x in range(self.res)]
+        self.arranged = [[[] for y in range(self.res[1])] for x in range(self.res[0])]
         for t, frame in enumerate(self.frames):
             diff = np.subtract(frame, self.prev)
             self.add_compact_frame(diff, t)
