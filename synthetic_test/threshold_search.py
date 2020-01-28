@@ -11,6 +11,10 @@ import events
 import argparse
 import string
 
+def log(msg, out):
+    print(msg)
+    out.write(f'{msg}\n')
+
 # Define script interface
 parser = argparse.ArgumentParser(description='Perform binary search of event \
         rate performance threshold')
@@ -35,17 +39,15 @@ parser.add_argument('out', help='output file')
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
 
-def log(msg, out):
-    print(msg)
-    out.write(f'{msg}\n')
-
+# Define filenames and parameter strings
 temp_name = args.out.split('.')[:-1]
 temp_name +=''.join(random.choices(string.ascii_uppercase+string.digits, k = 6)) 
 temp_name = ''.join(temp_name)
 args_res = f'{args.res[0]} {args.res[1]}'
 args_range = f'{args.range[0]} {args.range[1]}'
 precision_str = f'--precision {args.precision}'
-params_str = f'-r {args_res} -f {args.fps} -d {args.duration} --value {args.value} --range {args_range}'
+params_str = f'-r {args_res} -f {args.fps} -d {args.duration} \
+               --value {args.value} --range {args_range}'
 rate_str = f'--rate {args.rate}'
 raw_name = f'{temp_name}.raw'
 frm_name = f'{temp_name}.{args.format}'
@@ -53,6 +55,7 @@ frm_name = f'{temp_name}.{args.format}'
 args.coder = ' '.join(args.coder.split('~'))
 out_redir = '' if args.verbose else '> /dev/null 2>&1'
 
+# Binary search of event performance threshold
 os.makedirs(os.path.dirname(args.out), exist_ok=True)
 with open(args.out, 'w+') as out:
     log(f"Parameters used: {args}\n", out)
