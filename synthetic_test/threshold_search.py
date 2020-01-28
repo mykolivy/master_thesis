@@ -32,11 +32,12 @@ parser.add_argument('--precision', type=int, default=1)
 parser.add_argument('--format', default='aer', choices=['aer', 'caer'])
 parser.add_argument('--coder', default='lpaq1')
 parser.add_argument('out', help='output file')
+parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
-print(f"Parameters used: {args}")
 
-def log(msg):
+def log(msg, out):
     print(msg)
+    out.write(f'{msg}\n')
 
 temp_name = args.out.split('.')[:-1]
 temp_name +=''.join(random.choices(string.ascii_uppercase+string.digits, k = 6)) 
@@ -50,38 +51,41 @@ raw_name = f'{temp_name}.raw'
 frm_name = f'{temp_name}.{args.format}'
 
 args.coder = ' '.join(args.coder.split('~'))
-print(args.coder)
+out_redir = '' if args.verbose else '> /dev/null 2>&1'
 
 os.makedirs(os.path.dirname(args.out), exist_ok=True)
 with open(args.out, 'w+') as out:
+    log(f"Parameters used: {args}\n", out)
     interval = [0, 1]
     raw_paq_size = args.precision + 1 
     frm_paq_size = 0 
     while abs(raw_paq_size - frm_paq_size) > args.precision:
         rate = interval[0] + (interval[1] - interval[0]) / 2
         rate_str = f'--rate {rate}'
-        log(f'rate: {rate}')
+        log(f'rate: {rate}', out)
 
-        os.system(f'./synthetic.py {params_str} {rate_str} {args.sequence} {raw_name} > /dev/null 2>&1')
-        os.system(f'./synthetic.py {params_str} {rate_str} {args.sequence} {frm_name} > /dev/null 2>&1')
-        
-        
-        os.system(f'{args.coder} {raw_name} {raw_name}.paq > /dev/null 2>&1')
-        os.system(f'{args.coder} {frm_name} {frm_name}.paq > /dev/null 2>&1')
 
+        os.system(f'./synthetic.py {params_str} {rate_str} {args.sequence}\
+                {raw_name} {out_redir}')
         size = os.path.getsize(f'{raw_name}')
-        log(f'raw size: {size}')
+        log(f'    raw size: {size}', out)
+        
+        os.system(f'./synthetic.py {params_str} {rate_str} {args.sequence}\
+                {frm_name} {out_redir}')
         size = os.path.getsize(f'{frm_name}')
-        log(f'{args.format} size: {size}')
-
+        log(f'    {args.format} size: {size}', out)
+        
+        os.system(f'{args.coder} {raw_name} {raw_name}.paq {out_redir}')
         raw_paq_size = os.path.getsize(f'{raw_name}.paq')
-        log(f'raw.paq size: {raw_paq_size}')
+        log(f'    raw.paq size: {raw_paq_size}', out)
+        
+        os.system(f'{args.coder} {frm_name} {frm_name}.paq {out_redir}')
         frm_paq_size = os.path.getsize(f'{frm_name}.paq')
-        log(f'{args.format}.paq size: {frm_paq_size}')
+        log(f'    {args.format}.paq size: {frm_paq_size}', out)
         
         diff = abs(raw_paq_size - frm_paq_size) 
-        log(f'diff: {diff}')
-        log('')
+        log(f'    diff: {diff}', out)
+        log('', out)
         
         if raw_paq_size > frm_paq_size:
             interval[0] = interval[0] + (interval[1] - interval[0]) / 2
