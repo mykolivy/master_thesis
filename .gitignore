@@ -107,6 +107,12 @@ venv.bak/
 # 
 **.aux
 **.swp
+**/*.mp4
+**/*.mkv
+**/*.raw
+**/*.aer
+**/*.caer
+**/*.paq
 summary.pdf
 
 .gitmodules
