@@ -1,0 +1,66 @@
+Parameters used: Namespace(coder='./paq -8', duration=5, format='aer', fps=30, out='results/threshold/aer_paq8_randomflip_prec5.log', precision=5, range=[0, 255], rate=0.5, res=[64, 64], sequence='rate_random_flip', value=0, verbose=False)
+
+rate: 0.5
+    raw size: 614413
+    aer size: 3971085
+    raw.paq size: 76618
+    aer.paq size: 101868
+    diff: 25250
+
+rate: 0.25
+    raw size: 614413
+    aer size: 1987597
+    raw.paq size: 76420
+    aer.paq size: 75327
+    diff: 1093
+
+rate: 0.375
+    raw size: 614413
+    aer size: 2979341
+    raw.paq size: 76574
+    aer.paq size: 92623
+    diff: 16049
+
+rate: 0.3125
+    raw size: 614413
+    aer size: 2483469
+    raw.paq size: 76517
+    aer.paq size: 85001
+    diff: 8484
+
+rate: 0.28125
+    raw size: 614413
+    aer size: 2235533
+    raw.paq size: 76472
+    aer.paq size: 80407
+    diff: 3935
+
+rate: 0.265625
+    raw size: 614413
+    aer size: 2111565
+    raw.paq size: 76437
+    aer.paq size: 77915
+    diff: 1478
+
+rate: 0.2578125
+    raw size: 614413
+    aer size: 2049581
+    raw.paq size: 76426
+    aer.paq size: 76722
+    diff: 296
+
+rate: 0.25390625
+    raw size: 614413
+    aer size: 2018589
+    raw.paq size: 76410
+    aer.paq size: 75989
+    diff: 421
+
+rate: 0.255859375
+    raw size: 614413
+    aer size: 2034085
+    raw.paq size: 76413
+    aer.paq size: 49152
+    diff: 27261
+
+rate: 0.2568359375

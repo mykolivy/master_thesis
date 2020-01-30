@@ -49,8 +49,8 @@ precision_str = f'--precision {args.precision}'
 params_str = f'-r {args_res} -f {args.fps} -d {args.duration} \
                --value {args.value} --range {args_range}'
 rate_str = f'--rate {args.rate}'
-raw_name = f'{temp_name}.raw'
-frm_name = f'{temp_name}.{args.format}'
+raw_name = f'.{temp_name}.raw'
+frm_name = f'.{temp_name}.{args.format}'
 
 args.coder = ' '.join(args.coder.split('~'))
 out_redir = '' if args.verbose else '> /dev/null 2>&1'
@@ -95,6 +95,6 @@ with open(args.out, 'w+') as out:
         else:
             interval[1] = interval[0] + (interval[1] - interval[0]) / 2
 
-        os.system(f'rm *{temp_name}*')
+        os.system(f'rm -rf *{temp_name}*')
 
         prev_rate = rate

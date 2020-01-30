@@ -1,0 +1,347 @@
+Parameters used: Namespace(coder='./lpaq1 0', duration=10, format='caer', fps=30, out='results/threshold/caer_lpaq1_10s_randomflip_prec10.log', precision=10, range=[0, 255], rate=0.5, res=[64, 64], sequence='rate_random_flip', value=0, verbose=False)
+
+rate: 0.5
+    raw size: 1228813
+    caer size: 3069965
+    raw.paq size: 153713
+    caer.paq size: 164397
+    diff: 10684
+
+rate: 0.25
+    raw size: 1228813
+    caer size: 1539085
+    raw.paq size: 153584
+    caer.paq size: 133379
+    diff: 20205
+
+rate: 0.375
+    raw size: 1228813
+    caer size: 2304525
+    raw.paq size: 153684
+    caer.paq size: 156817
+    diff: 3133
+
+rate: 0.3125
+    raw size: 1228813
+    caer size: 1921805
+    raw.paq size: 153641
+    caer.paq size: 147111
+    diff: 6530
+
+rate: 0.34375
+    raw size: 1228813
+    caer size: 2113165
+    raw.paq size: 153660
+    caer.paq size: 152481
+    diff: 1179
+
+rate: 0.359375
+    raw size: 1228813
+    caer size: 2208845
+    raw.paq size: 153683
+    caer.paq size: 154874
+    diff: 1191
+
+rate: 0.3515625
+    raw size: 1228813
+    caer size: 2161005
+    raw.paq size: 153675
+    caer.paq size: 153474
+    diff: 201
+
+rate: 0.35546875
+    raw size: 1228813
+    caer size: 2184925
+    raw.paq size: 153678
+    caer.paq size: 153907
+    diff: 229
+
+rate: 0.353515625
+    raw size: 1228813
+    caer size: 2172965
+    raw.paq size: 153674
+    caer.paq size: 153823
+    diff: 149
+
+rate: 0.3525390625
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153676
+    caer.paq size: 153468
+    diff: 208
+
+rate: 0.35302734375
+    raw size: 1228813
+    caer size: 2169975
+    raw.paq size: 153675
+    caer.paq size: 154265
+    diff: 590
+
+rate: 0.352783203125
+    raw size: 1228813
+    caer size: 2168480
+    raw.paq size: 153673
+    caer.paq size: 153714
+    diff: 41
+
+rate: 0.3526611328125
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153670
+    caer.paq size: 153761
+    diff: 91
+
+rate: 0.35260009765625
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153674
+    caer.paq size: 153637
+    diff: 37
+
+rate: 0.352630615234375
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153683
+    caer.paq size: 154182
+    diff: 499
+
+rate: 0.3526153564453125
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153678
+    caer.paq size: 154147
+    diff: 469
+
+rate: 0.35260772705078125
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153680
+    caer.paq size: 153657
+    diff: 23
+
+rate: 0.3526115417480469
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153674
+    caer.paq size: 153577
+    diff: 97
+
+rate: 0.3526134490966797
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153671
+    caer.paq size: 153630
+    diff: 41
+
+rate: 0.3526144027709961
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153668
+    caer.paq size: 153378
+    diff: 290
+
+rate: 0.3526148796081543
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153676
+    caer.paq size: 153800
+    diff: 124
+
+rate: 0.3526146411895752
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153675
+    caer.paq size: 153582
+    diff: 93
+
+rate: 0.35261476039886475
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153675
+    caer.paq size: 153921
+    diff: 246
+
+rate: 0.35261470079421997
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153673
+    caer.paq size: 153991
+    diff: 318
+
+rate: 0.3526146709918976
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153673
+    caer.paq size: 153544
+    diff: 129
+
+rate: 0.3526146858930588
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153675
+    caer.paq size: 153821
+    diff: 146
+
+rate: 0.3526146784424782
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153664
+    caer.paq size: 153639
+    diff: 25
+
+rate: 0.3526146821677685
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153678
+    caer.paq size: 153829
+    diff: 151
+
+rate: 0.35261468030512333
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153670
+    caer.paq size: 153952
+    diff: 282
+
+rate: 0.35261467937380075
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153685
+    caer.paq size: 153599
+    diff: 86
+
+rate: 0.35261467983946204
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153679
+    caer.paq size: 153554
+    diff: 125
+
+rate: 0.3526146800722927
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153679
+    caer.paq size: 153472
+    diff: 207
+
+rate: 0.352614680188708
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153682
+    caer.paq size: 154069
+    diff: 387
+
+rate: 0.35261468013050035
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153671
+    caer.paq size: 153576
+    diff: 95
+
+rate: 0.3526146801596042
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153681
+    caer.paq size: 153617
+    diff: 64
+
+rate: 0.3526146801741561
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153678
+    caer.paq size: 153779
+    diff: 101
+
+rate: 0.35261468016688013
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153676
+    caer.paq size: 153890
+    diff: 214
+
+rate: 0.35261468016324216
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153672
+    caer.paq size: 153905
+    diff: 233
+
+rate: 0.35261468016142317
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153671
+    caer.paq size: 154195
+    diff: 524
+
+rate: 0.35261468016051367
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153665
+    caer.paq size: 154384
+    diff: 719
+
+rate: 0.3526146801600589
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153671
+    caer.paq size: 153753
+    diff: 82
+
+rate: 0.35261468015983155
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153664
+    caer.paq size: 154432
+    diff: 768
+
+rate: 0.35261468015971786
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153686
+    caer.paq size: 153819
+    diff: 133
+
+rate: 0.352614680159661
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153668
+    caer.paq size: 153599
+    diff: 69
+
+rate: 0.35261468015968944
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153670
+    caer.paq size: 153484
+    diff: 186
+
+rate: 0.35261468015970365
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153668
+    caer.paq size: 154052
+    diff: 384
+
+rate: 0.35261468015969655
+    raw size: 1228813
+    caer size: 2166985
+    raw.paq size: 153673
+    caer.paq size: 153767
+    diff: 94
+
+rate: 0.352614680159693
+    raw size: 1228813
+    caer size: 4109
+    raw.paq size: 4096
+    caer.paq size: 26
+    diff: 4070
+
+rate: 0.35261468015969477
+    raw size: 8205
+    caer size: 4109
+    raw.paq size: 534
+    caer.paq size: 26
+    diff: 508
+
+rate: 0.35261468015969566
+    raw size: 4109
