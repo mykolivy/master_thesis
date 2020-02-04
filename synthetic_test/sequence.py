@@ -194,7 +194,7 @@ class RandomChangeFrameIterator:
         else: 
             return 0
 
-class RandomChangeFrameIterator:
+class RandomIndepChangeFrameIterator:
     """Produces sequence of frames. In each frame each pixel has rate % chance
        to change their value in next frame"""
     def __init__(self, rate, value_range, sequence_config):
