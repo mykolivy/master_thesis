@@ -1,0 +1,44 @@
+Parameters used: Namespace(coder='./lpaq1 0', duration=5, format='aer', fps=30, out='results/threshold/aer_test.log', precision=10, range=[0, 255], rate=0.5, res=[64, 64], sequence='rate_random_flip', value=0, verbose=False)
+
+rate: 0.5
+    raw size: 614413
+    aer size: 3971085
+    raw.paq size: 76623
+    aer.paq size: 276597
+    diff: 199974
+
+rate: 0.25
+    raw size: 614413
+    aer size: 44045
+    raw.paq size: 4096
+    aer.paq size: 3482
+    diff: 614
+
+rate: 0.375
+    raw size: 614413
+    aer size: 44045
+    raw.paq size: 4096
+    aer.paq size: 3482
+    diff: 614
+
+rate: 0.4375
+    raw size: 614413
+    aer size: 237069
+    raw.paq size: 4096
+    aer.paq size: 0
+    diff: 4096
+
+rate: 0.46875
+    raw size: 614413
+    aer size: 237069
+    raw.paq size: 4096
+    aer.paq size: 0
+    diff: 4096
+
+rate: 0.484375
+    raw size: 614413
+    aer size: 237069
+    raw.paq size: 4096
+    aer.paq size: 4096
+    diff: 0
+

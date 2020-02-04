@@ -1,4 +1,5 @@
 import numpy as np
+import struct
 
 def create_raw_file(f, resolution, fps, duration):
     f.write((resolution[0]).to_bytes(4, byteorder='big'))
@@ -41,10 +42,11 @@ def save_compact_frames(arranged, out):
                 out.write(x[i+1].to_bytes(1, byteorder='big', signed=False))
             out.write(int(0).to_bytes(1, byteorder='big', signed=False))
 
-class AERBinaryDeltaIterator:
+class AERIterator:
     def __init__(self, frame_iterator):
         self.frames = frame_iterator
         self.prev = frame_iterator.start_frame
+        self.overflow = bytearray()
 
     def __iter__(self):
         return self
@@ -59,15 +61,24 @@ class AERBinaryDeltaIterator:
                         continue
                     result += i.to_bytes(4, byteorder='big', signed=False)
                     result += j.to_bytes(4, byteorder='big', signed=False)
-                    result += (t+1).to_bytes(4, byteorder='little', signed=False)
-                    if value >= 0:
-                        result += int(1).to_bytes(1, byteorder='big', signed=False)
+                    result += bytearray(struct.pack("f", t+1))
+
+                    sign = 0 if value >= 0 else 1
+                    if abs(value) > 127:
+                        result += int(127).to_bytes(1, byteorder='big', signed=False)
+                        overflow = int(abs(value) - 127)
+                        result += i.to_bytes(4, byteorder='big', signed=False)
+                        result += j.to_bytes(4, byteorder='big', signed=False)
+                        result += bytearray(struct.pack("f", t+1.5))
+                        result += int(sign & overflow).to_bytes(1,
+                                  byteorder='big', signed=False)
                     else:
-                        result += int(2).to_bytes(1, byteorder='big', signed=False)
+                        result += int(sign & abs(value)).to_bytes(1,
+                                byteorder='big', signed=False)
             self.prev = frame.copy()
             yield result
 
-class AERIterator:
+class AERByteBinaryIterator:
     def __init__(self, frame_iterator):
         self.frames = frame_iterator
         self.prev = frame_iterator.start_frame
@@ -170,4 +181,9 @@ class CAERIterator:
                         self.arranged[i][j].append(1)
                     else:
                         self.arranged[i][j].append(2)
-                     
+ 
+format_iterators = {
+        'aer': AERByteBinaryIterator,
+        'aer_true': AERIterator,
+        'caer': CAERIterator,
+}                    

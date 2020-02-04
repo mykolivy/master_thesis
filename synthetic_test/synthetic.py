@@ -13,6 +13,7 @@ import shutil
 import random
 import events
 import sequence as seq
+from events import format_iterators 
 import argparse
 
 # Define script interface
@@ -20,7 +21,8 @@ parser = argparse.ArgumentParser(description='Perform binary search of event \
         rate performance threshold')
 parser.add_argument('sequence', help='type of sequences generated', 
                     choices=['moving_edge', 'random_pixel', 'single_color', 
-                             'checkers', 'rate_random_flip'])
+                             'checkers', 'rate_random_flip',
+                             'rate_random_change'])
 parser.add_argument('-r', '--res', dest='res', action='store', default=[64, 64],
                     nargs=2, type=int,
                     help='Resolution of the generated sequences: y x')
@@ -37,18 +39,17 @@ args = parser.parse_args()
 print(args)
 
 sequence_config = seq.SequenceConfig(args.res, args.fps, args.duration)
+
 frame_iterators = {
-        'moving_edge': seq.MovingEdgeFrameIterator(sequence_config), 
-        'random_pixel': seq.RandomPixelFrameIterator(
-                        (args.range[0],args.range[1]), sequence_config),
-        'single_color': seq.SingleColorFrameIterator(args.value, sequence_config), 
-        'checkers': seq.CheckersFrameIterator(sequence_config),
-        'rate_random_flip': seq.RandomBinaryChangeFrameIterator(
-                            args.rate, sequence_config)
-}
-format_iterators = {
-        'aer': events.AERIterator,
-        'caer': events.CAERIterator
+    'moving_edge': seq.MovingEdgeFrameIterator(sequence_config), 
+    'random_pixel': seq.RandomPixelFrameIterator(
+                    (args.range[0],args.range[1]), sequence_config),
+    'single_color': seq.SingleColorFrameIterator(args.value, sequence_config), 
+    'checkers': seq.CheckersFrameIterator(sequence_config),
+    'rate_random_flip': seq.RandomBinaryChangeFrameIterator(
+                        args.rate, sequence_config),
+    'rate_random_change': seq.RandomChangeFrameIterator(args.rate,
+                          args.range, sequence_config)
 }
 
 out_name = '.'.join(args.out.split('.')[:-1]) 

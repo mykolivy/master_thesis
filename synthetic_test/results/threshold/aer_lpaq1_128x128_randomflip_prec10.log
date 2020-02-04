@@ -1,107 +1,129 @@
 Parameters used: Namespace(coder='./lpaq1 0', duration=5, format='aer', fps=30, out='results/threshold/aer_lpaq1_128x128_randomflip_prec10.log', precision=10, range=[0, 255], rate=0.5, res=[128, 128], sequence='rate_random_flip', value=0, verbose=False)
 
 rate: 0.5
-    raw size: 2414915
+    raw size: 2457613
     aer size: 15884301
-    raw.paq size: 300986
-    aer.paq size: 1021046
-    diff: 720060
+    raw.paq size: 306340
+    aer.paq size: 1021102
+    diff: 714762
 
 rate: 0.25
-    raw size: 16397
+    raw size: 2457613
     aer size: 7950349
-    raw.paq size: 30
-    aer.paq size: 626402
-    diff: 626372
+    raw.paq size: 305837
+    aer.paq size: 626615
+    diff: 320778
 
 rate: 0.125
-    raw size: 16397
+    raw size: 2457613
     aer size: 3983373
-    raw.paq size: 30
-    aer.paq size: 374064
-    diff: 374034
+    raw.paq size: 304275
+    aer.paq size: 374072
+    diff: 69797
 
 rate: 0.0625
-    raw size: 16397
+    raw size: 2457613
     aer size: 1999885
-    raw.paq size: 30
-    aer.paq size: 220558
-    diff: 220528
+    raw.paq size: 301066
+    aer.paq size: 220881
+    diff: 80185
 
-rate: 0.03125
-    raw size: 16397
-    aer size: 1008141
-    raw.paq size: 30
-    aer.paq size: 127834
-    diff: 127804
+rate: 0.09375
+    raw size: 2457613
+    aer size: 2991629
+    raw.paq size: 303232
+    aer.paq size: 301160
+    diff: 2072
 
-rate: 0.015625
-    raw size: 16397
-    aer size: 512269
-    raw.paq size: 30
-    aer.paq size: 72767
-    diff: 72737
+rate: 0.109375
+    raw size: 2457613
+    aer size: 3487501
+    raw.paq size: 303834
+    aer.paq size: 338281
+    diff: 34447
 
-rate: 0.0078125
-    raw size: 16397
-    aer size: 264333
-    raw.paq size: 30
-    aer.paq size: 40703
-    diff: 40673
+rate: 0.1015625
+    raw size: 2457613
+    aer size: 3239565
+    raw.paq size: 303515
+    aer.paq size: 319439
+    diff: 15924
 
-rate: 0.00390625
-    raw size: 16397
-    aer size: 140365
-    raw.paq size: 30
-    aer.paq size: 22526
-    diff: 22496
+rate: 0.09765625
+    raw size: 2457613
+    aer size: 3115597
+    raw.paq size: 303375
+    aer.paq size: 310667
+    diff: 7292
 
-rate: 0.001953125
-    raw size: 16397
-    aer size: 78381
-    raw.paq size: 30
-    aer.paq size: 12485
-    diff: 12455
+rate: 0.095703125
+    raw size: 2457613
+    aer size: 3053613
+    raw.paq size: 303306
+    aer.paq size: 306063
+    diff: 2757
 
-rate: 0.0009765625
-    raw size: 16397
-    aer size: 47389
-    raw.paq size: 30
-    aer.paq size: 6844
-    diff: 6814
+rate: 0.0947265625
+    raw size: 2457613
+    aer size: 3022621
+    raw.paq size: 303209
+    aer.paq size: 303148
+    diff: 61
 
-rate: 0.00048828125
-    raw size: 16397
-    aer size: 31893
-    raw.paq size: 30
-    aer.paq size: 3785
-    diff: 3755
+rate: 0.09521484375
+    raw size: 2457613
+    aer size: 3038117
+    raw.paq size: 303271
+    aer.paq size: 304248
+    diff: 977
 
-rate: 0.000244140625
-    raw size: 16397
-    aer size: 24145
-    raw.paq size: 30
-    aer.paq size: 2040
-    diff: 2010
+rate: 0.094970703125
+    raw size: 2457613
+    aer size: 3030369
+    raw.paq size: 303258
+    aer.paq size: 304243
+    diff: 985
 
-rate: 0.0001220703125
-    raw size: 16397
-    aer size: 20271
-    raw.paq size: 30
-    aer.paq size: 1107
-    diff: 1077
+rate: 0.0948486328125
+    raw size: 2457613
+    aer size: 3026495
+    raw.paq size: 303300
+    aer.paq size: 303568
+    diff: 268
 
-rate: 6.103515625e-05
-    raw size: 16397
-    aer size: 18334
-    raw.paq size: 30
-    aer.paq size: 604
-    diff: 574
+rate: 0.09478759765625
+    raw size: 2457613
+    aer size: 3024558
+    raw.paq size: 303255
+    aer.paq size: 303378
+    diff: 123
 
-rate: 3.0517578125e-05
-    raw size: 16397
-    aer size: 16397
-    raw.paq size: 30
-    aer.paq size: 30
-    diff: 0
+rate: 0.094757080078125
+    raw size: 2457613
+    aer size: 3022621
+    raw.paq size: 303301
+    aer.paq size: 303159
+    diff: 142
 
+rate: 0.0947723388671875
+    raw size: 2457613
+    aer size: 3022621
+    raw.paq size: 303231
+    aer.paq size: 303469
+    diff: 238
+
+rate: 0.09476470947265625
+    raw size: 2457613
+    aer size: 3022621
+    raw.paq size: 303256
+    aer.paq size: 303589
+    diff: 333
+
+rate: 0.09476089477539062
+    raw size: 2457613
+    aer size: 2498045
+    raw.paq size: 8192
+    aer.paq size: 0
+    diff: 8192
+
+rate: 0.09476280212402344

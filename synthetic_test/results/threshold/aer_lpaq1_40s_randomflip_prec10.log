@@ -1,0 +1,116 @@
+Parameters used: Namespace(coder='./lpaq1 0', duration=40, format='aer', fps=30, out='results/threshold/aer_lpaq1_40s_randomflip_prec10.log', precision=10, range=[0, 255], rate=0.5, res=[64, 64], sequence='rate_random_flip', value=0, verbose=False)
+
+rate: 0.5
+    raw size: 4915213
+    aer size: 31926285
+    raw.paq size: 616206
+    aer.paq size: 2173886
+    diff: 1557680
+
+rate: 0.25
+    raw size: 4915213
+    aer size: 15965197
+    raw.paq size: 616042
+    aer.paq size: 1312231
+    diff: 696189
+
+rate: 0.125
+    raw size: 4915213
+    aer size: 7984653
+    raw.paq size: 615609
+    aer.paq size: 777636
+    diff: 162027
+
+rate: 0.0625
+    raw size: 4915213
+    aer size: 3994381
+    raw.paq size: 614591
+    aer.paq size: 454073
+    diff: 160518
+
+rate: 0.09375
+    raw size: 4915213
+    aer size: 5989517
+    raw.paq size: 615263
+    aer.paq size: 624758
+    diff: 9495
+
+rate: 0.078125
+    raw size: 4915213
+    aer size: 4991949
+    raw.paq size: 615021
+    aer.paq size: 542023
+    diff: 72998
+
+rate: 0.0859375
+    raw size: 4915213
+    aer size: 5490733
+    raw.paq size: 615107
+    aer.paq size: 582793
+    diff: 32314
+
+rate: 0.08984375
+    raw size: 4915213
+    aer size: 5740125
+    raw.paq size: 615177
+    aer.paq size: 603714
+    diff: 11463
+
+rate: 0.091796875
+    raw size: 4915213
+    aer size: 5864821
+    raw.paq size: 615262
+    aer.paq size: 614435
+    diff: 827
+
+rate: 0.0927734375
+    raw size: 4915213
+    aer size: 5927169
+    raw.paq size: 615236
+    aer.paq size: 620294
+    diff: 5058
+
+rate: 0.09228515625
+    raw size: 4915213
+    aer size: 5895995
+    raw.paq size: 615298
+    aer.paq size: 616655
+    diff: 1357
+
+rate: 0.092041015625
+    raw size: 4915213
+    aer size: 5880408
+    raw.paq size: 615207
+    aer.paq size: 615557
+    diff: 350
+
+rate: 0.0919189453125
+    raw size: 4915213
+    aer size: 5864821
+    raw.paq size: 615276
+    aer.paq size: 614208
+    diff: 1068
+
+rate: 0.09197998046875
+    raw size: 4915213
+    aer size: 5864821
+    raw.paq size: 615188
+    aer.paq size: 613558
+    diff: 1630
+
+rate: 0.092010498046875
+    raw size: 4915213
+    aer size: 5864821
+    raw.paq size: 615253
+    aer.paq size: 613920
+    diff: 1333
+
+rate: 0.0920257568359375
+    raw size: 4915213
+    aer size: 5864821
+    raw.paq size: 615206
+    aer.paq size: 613598
+    diff: 1608
+
+rate: 0.09203338623046875
+    raw size: 2411654
