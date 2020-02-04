@@ -30,6 +30,7 @@ parser.add_argument('-d', dest='durations', type=int, nargs='+',
                     default=[1, 2, 4, 8, 16])
 parser.add_argument('-r', dest='resolutions', type=int, nargs='+', 
                     default=[1, 2, 4, 8, 16, 32, 64])
+parser.add_argument('-i', dest='iterations', type=int, default=1)
 parser.add_argument('out', help='output file')
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
@@ -41,44 +42,47 @@ args.precision = 0.00001
 
 # Binary search of event performance threshold
 def threshold_binary_search(params_str, sequence, coder, ext,
-                            raw_name, frm_name, out_redir):
-    interval = [0, 1]
-    raw_paq_size = args.precision + 1 
-    frm_paq_size = 0 
-    
-    rate = interval[0] + (interval[1] - interval[0]) / 2
-    prev_rate = rate + args.precision + 1
-    while abs(rate - prev_rate) > args.precision and \
-          abs(raw_paq_size - frm_paq_size) != 0:
-        rate_str = f'--rate {rate}'
-        log(f'          {rate}', out)
-
-        os.system(f'./synthetic.py {params_str} {rate_str} {sequence}\
-                {raw_name} {out_redir}')
-        size = os.path.getsize(f'{raw_name}')
+                            raw_name, frm_name, iterations, out_redir):
+    avg_result = 0
+    for it in range(0, iterations):
+        interval = [0, 1]
+        raw_paq_size = args.precision + 1 
+        frm_paq_size = 0 
         
-        os.system(f'./synthetic.py {params_str} {rate_str} {sequence}\
-                {frm_name} {out_redir}')
-        size = os.path.getsize(f'{frm_name}')
-        
-        os.system(f'{args.coder} {raw_name} {raw_name}.paq {out_redir}')
-        raw_paq_size = os.path.getsize(f'{raw_name}.paq')
-        
-        os.system(f'{args.coder} {frm_name} {frm_name}.paq {out_redir}')
-        frm_paq_size = os.path.getsize(f'{frm_name}.paq')
-        
-        diff = abs(raw_paq_size - frm_paq_size) 
-        
-        if raw_paq_size > frm_paq_size:
-            interval[0] = interval[0] + (interval[1] - interval[0]) / 2
-        else:
-            interval[1] = interval[0] + (interval[1] - interval[0]) / 2
-
-        os.system(f'rm -rf *{temp_name}*')
-
-        prev_rate = rate
         rate = interval[0] + (interval[1] - interval[0]) / 2
-    return (rate + prev_rate) / 2
+        prev_rate = rate + args.precision + 1
+        while abs(rate - prev_rate) > args.precision and \
+              abs(raw_paq_size - frm_paq_size) != 0:
+            rate_str = f'--rate {rate}'
+            log(f'          {rate}', out)
+
+            os.system(f'./synthetic.py {params_str} {rate_str} {sequence}\
+                    {raw_name} {out_redir}')
+            size = os.path.getsize(f'{raw_name}')
+            
+            os.system(f'./synthetic.py {params_str} {rate_str} {sequence}\
+                    {frm_name} {out_redir}')
+            size = os.path.getsize(f'{frm_name}')
+            
+            os.system(f'{args.coder} {raw_name} {raw_name}.paq {out_redir}')
+            raw_paq_size = os.path.getsize(f'{raw_name}.paq')
+            
+            os.system(f'{args.coder} {frm_name} {frm_name}.paq {out_redir}')
+            frm_paq_size = os.path.getsize(f'{frm_name}.paq')
+            
+            diff = abs(raw_paq_size - frm_paq_size) 
+            
+            if raw_paq_size > frm_paq_size:
+                interval[0] = interval[0] + (interval[1] - interval[0]) / 2
+            else:
+                interval[1] = interval[0] + (interval[1] - interval[0]) / 2
+
+            os.system(f'rm -rf *{temp_name}*')
+
+            prev_rate = rate
+            rate = interval[0] + (interval[1] - interval[0]) / 2
+        avg_result += rate
+    return avg_result * (1.0 / iterations)
 
 
 os.makedirs(os.path.dirname(args.out), exist_ok=True)
@@ -99,7 +103,8 @@ with open(args.out, 'w+') as out:
             frm_name = f'{temp_name}.{args.format}'
 
             rate =threshold_binary_search(params_str, args.sequence, args.coder,
-                                    args.format, raw_name, frm_name, out_redir)
+                                          args.format, raw_name, frm_name, 
+                                          args.iterations, out_redir)
             log(f"{res}    {dur}    {rate}", out)
             log('', out)
             
