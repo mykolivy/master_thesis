@@ -194,7 +194,7 @@ class RandomChangeFrameIterator:
         else: 
             return 0
 
-class RandomIndepChangeFrameIterator:
+class RandomChanceChangeIterator:
     """Produces sequence of frames. In each frame each pixel has rate % chance
        to change their value in next frame"""
     def __init__(self, rate, value_range, sequence_config):
@@ -202,7 +202,8 @@ class RandomIndepChangeFrameIterator:
         self.index = 1
         self.value_range = value_range
         self.start_frame = np.zeros(self.conf.res)
-        self.val = self.start_frame.copy()
+        self.frame = np.zeros(self.conf.res)
+        self.next = self.frame
         self.rate = rate
 
     def __iter__(self):
@@ -211,10 +212,11 @@ class RandomIndepChangeFrameIterator:
     def __next__(self):
         if self.index == self.conf.frame_num:
             raise StopIteration
-        for i, row in enumerate(self.val):
+        self.frame = self.next.copy()
+        for i, row in enumerate(self.next):
             for j, x in enumerate(row):
                 if random.uniform(0, 1) <= self.rate:
-                    self.val[i][j] = random.randrange(self.value_range[0], 
+                    self.next[i][j] = random.randrange(self.value_range[0], 
                                                       self.value_range[1])
         self.index += 1
-        return self.val
+        return self.frame

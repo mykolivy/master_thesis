@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser(description='Perform binary search of event \
 parser.add_argument('sequence', help='type of sequences generated', 
                     choices=['moving_edge', 'random_pixel', 'single_color', 
                              'checkers', 'rate_random_flip',
-                             'rate_random_change'])
+                             'rate_random_change', 'rate_random'])
 parser.add_argument('-r', '--res', dest='res', action='store', default=[64, 64],
                     nargs=2, type=int,
                     help='Resolution of the generated sequences: y x')
@@ -49,7 +49,9 @@ frame_iterators = {
     'rate_random_flip': seq.RandomBinaryChangeFrameIterator(
                         args.rate, sequence_config),
     'rate_random_change': seq.RandomChangeFrameIterator(args.rate,
-                          args.range, sequence_config)
+                          args.range, sequence_config),
+    'rate_random': seq.RandomChanceChangeIterator(args.rate, args.range,
+                   sequence_config)
 }
 
 out_name = '.'.join(args.out.split('.')[:-1]) 
