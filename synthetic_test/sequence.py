@@ -26,7 +26,7 @@ class MovingEdgeFrameIterator:
         return self
 
     def __next__(self):
-        if self.index == self.conf.frame_num:
+        if self.index == self.conf.frame_num+1:
             raise StopIteration
         self.position += self.move_ratio
         if self.index == 1:
