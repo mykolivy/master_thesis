@@ -64,7 +64,7 @@ class AERIterator:
                     result += bytearray(struct.pack("f", t+1))
 
                     sign = 0 if value >= 0 else 1
-                    if abs(value) > 127:
+                    if abs(value) >= 127:
                         result += int(127).to_bytes(1, byteorder='big', signed=False)
                         overflow = int(abs(value) - 127)
                         result += i.to_bytes(4, byteorder='big', signed=False)
@@ -148,21 +148,19 @@ class CAERIterator:
         self.frames = frame_iterator
         self.prev = frame_iterator.start_frame
         self.res = self.frames.conf.res
-        self.arranged = None
+        self.compute_compact_frames()
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if self.arranged == None:
-            self.compute_compact_frames()
         for row in self.arranged:
             for x in row:
                 result = bytearray()
                 for i in range(0,len(x),2):
                     result += x[i].to_bytes(4, byteorder='little', signed=False)
-                    result += x[i+1].to_bytes(1, byteorder='big', signed=False)
-                result += int(0).to_bytes(1, byteorder='big', signed=False)
+                    self.append_value(result, x[i+1])
+                result += int(0).to_bytes(1, byteorder='big', signed=True)
                 yield result
 
     def compute_compact_frames(self):
@@ -177,13 +175,24 @@ class CAERIterator:
             for j, value in enumerate(row):
                 if value != 0:
                     self.arranged[i][j].append(t)
-                    if value >= 0:
-                        self.arranged[i][j].append(1)
-                    else:
-                        self.arranged[i][j].append(2)
+                    self.arranged[i][j].append(value)
+
+    # Converts num to 1-byte or 2-byte signed representation and appends to
+    # result. Positive value x is stored as x-1 (0 counts as +1)
+    # num != 0, -128 < num < 127
+    def append_value(self, result, num):
+        if abs(num) >= 127:
+            sign = 1 if num > 0 else -1   
+            result += int(sign*126).to_bytes(1, byteorder='big', signed=True)
+            result += int(num-sign*128).to_bytes(1, byteorder='big', signed=True)
+        else:
+            print('single byte')
+            result += num.to_bytes(1, byteorder='big', signed=True)
+
  
 format_iterators = {
         'aer': AERByteBinaryIterator,
         'aer_true': AERIterator,
-        'caer': CAERIterator,
+        'caer': CAERBinaryDeltaIterator,
+        'caer_true': CAERIterator
 }                    
