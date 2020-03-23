@@ -19,6 +19,7 @@ import subprocess
 import shutil
 import random
 import tempfile
+import math
 
 def extract_frames(video_path, img_folder):
     out = f'{img_folder}/image-%4d.jpg'
@@ -34,11 +35,11 @@ def log(msg, out):
 class VideoStat:
     avg_rate = 0
     max_rate = 0
-    min_rate = 0
+    min_rate = math.inf
     rate_var = 0
 
     max_val = 0
-    min_val = 0
+    min_val = math.inf
     val_var = 0
 
     pixel_num = 0
