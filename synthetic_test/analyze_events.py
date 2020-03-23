@@ -18,47 +18,90 @@ import os
 import subprocess
 import shutil
 import random
+import tempfile
 
-input_folder = Path(sys.argv[1])
-all_files = input_folder.glob('**/*')
-grand_data = [[], [], []]
-grand_rate = [[], [], []]
+def extract_frames(video_path, img_folder):
+    out = f'{img_folder}/image-%4d.jpg'
+    print(out)
+    os.system(f'ffmpeg -i {video_path} {out} > /dev/null')
+
+def load_frame(frame_path):
+    return np.array(Image.open(frame_path))
+
+def log(msg, out):
+    print(msg)
+    out.write(f'{msg}\n')
+
+class VideoStat:
+    avg_rate = 0
+    max_rate = 0
+    min_rate = 0
+    rate_var = 0
+
+    max_val = 0
+    min_val = 0
+    val_var = 0
+
+    pixel_num = 0
+
+    N = 0
+
+    def __init__(self, path):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            tmpdir = Path(tmpdirname)
+            extract_frames(video, tmpdir)
+            frames = list(tmpdir.iterdir())
+            self.__process_frames__(frames)
+     
+    def __process_frames__(self, frames):
+        if not frames: raise ValueError()
+        frames = sorted(frames)
+        
+        rates = []
+        vals = []
+
+        prev = load_frame(frames[0])
+        self.pixel_num = prev.size
+        for i in range(1, len(frames)):
+            curr = load_frame(frames[i])
+            diff = curr - prev
+            self.__update__(diff, rates, vals)
+            prev = curr.copy()
+
+        rates = [x / self.pixel_num for x in rates]
+        self.avg_rate = np.average(rates)
+        self.rate_var = np.var(rates) 
+        self.max_rate = np.amax(rates)
+        self.min_rate = np.amin(rates)
+        self.val_var = np.var(vals)
+
+    def __update__(self, frame_diff, rates, vals):
+        self.N += 1
+        nonzero = frame_diff[frame_diff != 0]
+       
+        rate = len(nonzero)
+        rates.append(rate)
+        
+        avg_val = np.average(nonzero)
+        vals.append(avg_val)
+        
+        min_val = np.amin(nonzero)
+        max_val = np.amax(nonzero)
+        if self.min_val > min_val: self.min_val = min_val
+        if self.max_val < max_val: self.max_val = max_val
+            
+    def __str__(self):
+        return f'Rate({self.avg_rate}, {self.rate_var}, {self.min_rate}, {self.max_rate}) | Values({self.val_var}, {self.min_val}, {self.max_val})'
+
 log_file = open(sys.argv[2], 'w+')
-for file_name in [x for x in all_files if x.is_file()]:
-    #local_data = [[], [], []]
-    #local_rate = [[], [], []]
-    img_folder = 'temp_img_folder'
-    os.mkdir(img_folder)
-    os.system(f'ffmpeg -i {file_name} {img_folder}/image-%4d.png > /dev/null')
-    prev = None 
-    first = True
-    diffs = []
-    rates = []
-    for img_name in [x for x in sorted(Path(img_folder).glob('**/*')) if x.is_file()]:
-        img = Image.open(img_name)
-        values = np.array(img)
-        pixel_num = values.shape[0] * values.shape[1]
-        if first:
-            print(f'{file_name} {values.shape}')
-            log_file.write(f'{file_name} {values.shape}')
-        else:
-            diff = np.subtract(values, prev)
-            diffs.append(diff)
-            rates.append(np.count_nonzero(diff, axis=(0,1)) / pixel_num)
-            #event_num = [0,0,0]
-            #for row in diff:
-                #for channels in row:
-                    #for i, x in enumerate(channels):
-                        #if x != 0:
-                            #local_data[i].append(x)
-                            #event_num[i] += 1
-            #for i in range(3):
-                #local_rate[i].append(event_num[i] / pixel_num)
+videos = Path(sys.argv[1]).glob('*.mp4')
+video_stats = {}
 
-        prev = values
-        first = False
-    print(f'Mean rate: {np.mean(rates, axis=0)}\n')
-    log_file.write(f'Mean rate: {np.mean(rates, axis=0)}\n')
-
-    shutil.rmtree(img_folder) 
+for video in videos:
+    try: 
+        stat = VideoStat(video)
+        log(f'{video}: {stat}', log_file)
+    except ValueError:
+        log(f'ERROR: {video} couldn\'t be analysed', log_file)
+            
 log_file.close()
