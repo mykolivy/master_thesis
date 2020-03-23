@@ -49,9 +49,10 @@ class VideoStat:
             tmpdir = Path(tmpdirname)
             print("\tExtracting frames...", end='', flush=True)
             extract_frames(video, tmpdir)
-            print('\r\tExtracted frames succefully')
+            print('\r\tComputing stats...', end='', flush=True)
             frames = list(tmpdir.iterdir())
             self.__process_frames__(frames)
+            print('\r\t', end='', flush=True)
      
     def __process_frames__(self, frames):
         if not frames: raise ValueError()
@@ -93,7 +94,7 @@ class VideoStat:
         return f'Rate({self.avg_rate}, {self.rate_var}, {self.min_rate}, {self.max_rate}) | Values({self.val_var}, {self.min_val}, {self.max_val})'
 
 log_file = open(sys.argv[2], 'w+')
-videos = Path(sys.argv[1]).glob('*.mp4')
+videos = sorted(list(Path(sys.argv[1]).glob('*.mp4')))
 video_stats = {}
 
 for video in videos:
