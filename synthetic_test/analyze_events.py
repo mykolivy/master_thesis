@@ -22,8 +22,7 @@ import tempfile
 
 def extract_frames(video_path, img_folder):
     out = f'{img_folder}/image-%4d.jpg'
-    print(out)
-    os.system(f'ffmpeg -i {video_path} {out} > /dev/null')
+    os.system(f'ffmpeg -i {video_path} {out} > /dev/null 2>&1')
 
 def load_frame(frame_path):
     return np.array(Image.open(frame_path))
@@ -43,8 +42,6 @@ class VideoStat:
     val_var = 0
 
     pixel_num = 0
-
-    N = 0
 
     def __init__(self, path):
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -76,7 +73,6 @@ class VideoStat:
         self.val_var = np.var(vals)
 
     def __update__(self, frame_diff, rates, vals):
-        self.N += 1
         nonzero = frame_diff[frame_diff != 0]
        
         rate = len(nonzero)
