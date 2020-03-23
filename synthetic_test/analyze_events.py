@@ -46,7 +46,9 @@ class VideoStat:
     def __init__(self, path):
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpdir = Path(tmpdirname)
+            print("\tExtracting frames...", end='', flush=True)
             extract_frames(video, tmpdir)
+            print('\r\tExtracted frames succefully')
             frames = list(tmpdir.iterdir())
             self.__process_frames__(frames)
      
@@ -95,9 +97,10 @@ video_stats = {}
 
 for video in videos:
     try: 
+        print(f"Analyzing {video}")
         stat = VideoStat(video)
         log(f'{video}: {stat}', log_file)
-    except ValueError:
+    except:
         log(f'ERROR: {video} couldn\'t be analysed', log_file)
             
 log_file.close()
