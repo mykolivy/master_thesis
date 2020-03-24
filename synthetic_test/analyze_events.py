@@ -21,6 +21,8 @@ import random
 import tempfile
 import math
 
+out_str = 'Rate({self.avg_rates}, {self.rate_vars}, {self.min_rates}, {self.max_rates}) | Values({self.avg_vals}, {self.val_vars}, {self.min_vals}, {self.max_vals})'
+
 def extract_frames(video_path, img_folder):
     out = f'{img_folder}/image-%4d.jpg'
     os.system(f'ffmpeg -i {video_path} {out} > /dev/null 2>&1')
@@ -108,6 +110,8 @@ class VideoStat:
 log_file = open(sys.argv[2], 'w+')
 videos = sorted(list(Path(sys.argv[1]).glob('*.mp4')))
 video_stats = {}
+
+log(f'Output format: {out_str}', log_file)
 
 for video in videos:
     #try: 
