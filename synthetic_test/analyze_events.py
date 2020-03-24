@@ -33,14 +33,14 @@ def log(msg, out):
     out.write(f'{msg}\n')
 
 class VideoStat:
-    avg_rate = 0
-    max_rate = 0
-    min_rate = math.inf
-    rate_var = 0
+    avg_rates = 0
+    max_rates = 0
+    min_rates = math.inf
+    rate_vars = 0
 
-    max_val = 0
-    min_val = math.inf
-    val_var = 0
+    max_vals = 0
+    min_vals = math.inf
+    val_vars = 0
 
     pixel_num = 0
 
@@ -62,47 +62,59 @@ class VideoStat:
         vals = []
 
         prev = load_frame(frames[0])
-        self.pixel_num = prev.size
+        shape = prev.shape
+        self.pixel_num = shape[0] * shape[1]
+        print("\tFirst pass...", end='', flush=True)
         for i in range(1, len(frames)):
             curr = load_frame(frames[i])
-            diff = curr - prev
+            diff = np.subtract(curr, prev)
             self.__update__(diff, rates, vals)
-            prev = curr.copy()
+            prev = curr
 
-        rates = [x / self.pixel_num for x in rates]
-        self.avg_rate = np.average(rates)
-        self.rate_var = np.var(rates) 
-        self.max_rate = np.amax(rates)
-        self.min_rate = np.amin(rates)
-        self.val_var = np.var(vals)
+        rates = [[y / self.pixel_num for y in x] for x in rates]
+        
+        print("\r\tComputing average rate...", end='', flush=True)
+        self.avg_rates = np.average(rates, axis=(0))
+        print("\r\tComputing rate variance...", end='', flush=True)
+        self.rate_vars = np.var(rates, axis=(0)) 
+        print("\r\tComputing min and max rate...", end='', flush=True)
+        self.max_rates = np.amax(rates, axis=(0))
+        self.min_rates = np.amin(rates, axis=(0))
+        print("\r\tComputing average values...", end='', flush=True)
+        self.avg_vals = np.average(vals, axis=(0))
+        print("\r\tComputing value variance...", end='', flush=True)
+        self.val_vars = np.var(vals, axis=(0))
+        print("\r\tComputing min and max values...", end='', flush=True)
+        self.max_vals = np.amax(vals, axis=(0))
+        self.min_vals = np.amin(vals, axis=(0))
 
     def __update__(self, frame_diff, rates, vals):
-        nonzero = frame_diff[frame_diff != 0]
+        abs_diff = np.abs(frame_diff)
+        #nonzero = frame_diff[abs_diff != 0]
        
-        rate = len(nonzero)
-        rates.append(rate)
+        #rate = len(nonzero)
+        rs = []
+        vs = []
+        for i in range(3):
+            ch = frame_diff[:,:,i]
+            rs.append(len(frame_diff[abs_diff[:,:,i] != 0]))
+            vs.append(np.average(ch[ch != 0]))
+        rates.append(rs)
+        vals.append(vs)
         
-        avg_val = np.average(nonzero)
-        vals.append(avg_val)
-        
-        min_val = np.amin(nonzero)
-        max_val = np.amax(nonzero)
-        if self.min_val > min_val: self.min_val = min_val
-        if self.max_val < max_val: self.max_val = max_val
-            
     def __str__(self):
-        return f'Rate({self.avg_rate}, {self.rate_var}, {self.min_rate}, {self.max_rate}) | Values({self.val_var}, {self.min_val}, {self.max_val})'
+        return f'Rate({self.avg_rates}, {self.rate_vars}, {self.min_rates}, {self.max_rates}) | Values({self.avg_vals}, {self.val_vars}, {self.min_vals}, {self.max_vals})'
 
 log_file = open(sys.argv[2], 'w+')
 videos = sorted(list(Path(sys.argv[1]).glob('*.mp4')))
 video_stats = {}
 
 for video in videos:
-    try: 
+    #try: 
         print(f"Analyzing {video}")
         stat = VideoStat(video)
         log(f'{video}: {stat}', log_file)
-    except:
-        log(f'ERROR: {video} couldn\'t be analysed', log_file)
+    #except:
+        #log(f'ERROR: {video} couldn\'t be analysed', log_file)
             
 log_file.close()
