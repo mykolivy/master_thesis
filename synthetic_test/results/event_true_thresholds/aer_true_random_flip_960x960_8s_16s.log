@@ -1,0 +1,6 @@
+Parameters used: Namespace(coder='./lpaq1 0', durations=[8, 16], format='aer_true', iterations=1, out='results/event_true_thresholds/aer_true_random_flip_960x960_8s_16s.log', precision=1e-05, resolutions=[960], sequence='rate_random_flip', verbose=True)
+
+RES    DURATION    THRESHOLD
+960    8
+    rate: 
+          0.5
