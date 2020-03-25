@@ -42,6 +42,10 @@ def save_compact_frames(arranged, out):
                 out.write(x[i+1].to_bytes(1, byteorder='big', signed=False))
             out.write(int(0).to_bytes(1, byteorder='big', signed=False))
 
+# Each event is represented as: 
+#   i (4 bytes), j (4 bytes), t (float), value (1 byte), polarity (1 byte)
+# If value >= 127, two events are created at the same timestamp (127 and
+# residual), so that each value can be stored with one byte
 class AERIterator:
     def __init__(self, frame_iterator):
         self.frames = frame_iterator
@@ -69,7 +73,10 @@ class AERIterator:
                         overflow = int(abs(value) - 127)
                         result += i.to_bytes(4, byteorder='big', signed=False)
                         result += j.to_bytes(4, byteorder='big', signed=False)
-                        result += bytearray(struct.pack("f", t+1.5))
+                        #shift timestamp by a half
+                        #result += bytearray(struct.pack("f", t+1.5))
+                        #use the same timestamp
+                        result += bytearray(struct.pack("f", t+1))
                         result += int(sign & overflow).to_bytes(1,
                                   byteorder='big', signed=False)
                     else:
@@ -103,6 +110,62 @@ class AERByteBinaryIterator:
                         result += int(2).to_bytes(1, byteorder='big', signed=False)
             self.prev = frame.copy()
             yield result
+
+# Same as AERIterator, but lossy.
+# Events with value smaller or equal to the threshold are ignored.
+# Consecutive ignored values are accumulated, until their sum is > threshold, in
+# which case a new event with value of this sum is created at the current
+# timestamp.
+class AERLossyIterator:
+    def __init__(self, frame_iterator, threshold=8):
+        self.threshold = threshold
+        self.res = frame_iterator.conf
+        self.ignored_sums = np.zeros(self.res)
+        self.frames = frame_iterator
+        self.prev = frame_iterator.start_frame
+        self.overflow = bytearray()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        for t, frame in enumerate(self.frames):
+            diff = np.subtract(frame, self.prev)
+            result = bytearray()
+            for i, row in enumerate(diff):
+                for j, value in enumerate(row):
+                    if value == 0:
+                        continue
+                    elif abs(value) <= self.threshold:
+                        self.ignored_sums[i][j] += value
+                        if abs(self.ignored_sums[i][j]) > self.threshold:
+                            AERLossyIterator.event_to_bytes(i,j,t+1,
+                                    self.ignored_sums[i][j], result)
+                            self.ignored_sums[i][j] = 0
+                    else:
+                        AERLossyIterator.event_to_bytes(i,j,t+1,value,result)
+            self.prev = frame.copy()
+            yield result
+
+    def event_to_bytes(i, j, t, value, result):
+        result += i.to_bytes(4, byteorder='big', signed=False)
+        result += j.to_bytes(4, byteorder='big', signed=False)
+        result += bytearray(struct.pack("f", t))
+
+        sign = 0 if value >= 0 else 1
+        if abs(value) >= 127:
+            result += int(127).to_bytes(1, byteorder='big', signed=False)
+            overflow = int(abs(value) - 127)
+            result += i.to_bytes(4, byteorder='big', signed=False)
+            result += j.to_bytes(4, byteorder='big', signed=False)
+            #use the same timestamp
+            result += bytearray(struct.pack("f", t))
+            result += int(sign & overflow).to_bytes(1,
+                      byteorder='big', signed=False)
+        else:
+            result += int(sign & abs(value)).to_bytes(1,
+                    byteorder='big', signed=False)
+
 
 class CAERBinaryDeltaIterator:
     def __init__(self, frame_iterator):
@@ -193,6 +256,7 @@ class CAERIterator:
 format_iterators = {
         'aer': AERByteBinaryIterator,
         'aer_true': AERIterator,
+        'aer_lossy': AERLossyIterator,
         'caer': CAERBinaryDeltaIterator,
         'caer_true': CAERIterator
 }                    
