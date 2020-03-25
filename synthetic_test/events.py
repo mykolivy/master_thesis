@@ -119,8 +119,8 @@ class AERByteBinaryIterator:
 class AERLossyIterator:
     def __init__(self, frame_iterator, threshold=8):
         self.threshold = threshold
-        self.res = frame_iterator.conf
-        self.ignored_sums = np.zeros(self.res)
+        self.res = frame_iterator.conf.res
+        self.ignored_sums = np.zeros((self.res[0], self.res[1]))
         self.frames = frame_iterator
         self.prev = frame_iterator.start_frame
         self.overflow = bytearray()
@@ -148,6 +148,7 @@ class AERLossyIterator:
             yield result
 
     def event_to_bytes(i, j, t, value, result):
+        value = int(value)
         result += i.to_bytes(4, byteorder='big', signed=False)
         result += j.to_bytes(4, byteorder='big', signed=False)
         result += bytearray(struct.pack("f", t))
@@ -163,8 +164,8 @@ class AERLossyIterator:
             result += int(sign & overflow).to_bytes(1,
                       byteorder='big', signed=False)
         else:
-            result += int(sign & abs(value)).to_bytes(1,
-                    byteorder='big', signed=False)
+            polarity = int(sign & abs(value))
+            result += polarity.to_bytes(1, byteorder='big', signed=False)
 
 
 class CAERBinaryDeltaIterator:
@@ -251,12 +252,3 @@ class CAERIterator:
         else:
             print('single byte')
             result += num.to_bytes(1, byteorder='big', signed=True)
-
- 
-format_iterators = {
-        'aer': AERByteBinaryIterator,
-        'aer_true': AERIterator,
-        'aer_lossy': AERLossyIterator,
-        'caer': CAERBinaryDeltaIterator,
-        'caer_true': CAERIterator
-}                    
