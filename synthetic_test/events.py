@@ -61,6 +61,7 @@ class AERIterator:
             result = bytearray()
             for i, row in enumerate(diff):
                 for j, value in enumerate(row):
+                    value = int(value)
                     if value == 0:
                         continue
                     result += i.to_bytes(4, byteorder='big', signed=False)
@@ -143,6 +144,7 @@ class AERLossyIterator:
                                     self.ignored_sums[i][j], result)
                             self.ignored_sums[i][j] = 0
                     else:
+                        self.ignored_sums[i][j] = 0
                         AERLossyIterator.event_to_bytes(i,j,t+1,value,result)
             self.prev = frame.copy()
             yield result
@@ -252,3 +254,12 @@ class CAERIterator:
         else:
             print('single byte')
             result += num.to_bytes(1, byteorder='big', signed=True)
+
+
+format_iterators = {
+        'aer': AERByteBinaryIterator,
+        'aer_true': AERIterator,
+        'aer_lossy': AERLossyIterator,
+        'caer': CAERBinaryDeltaIterator,
+        'caer_true': CAERIterator
+}
