@@ -1,0 +1,64 @@
+Dear Prof. Joachim Weickert and Dr. Pascal Peter,
+
+Reminder and notation:
+ Event rate -- percentage of pixels that change their values from one frame to 
+   another.
+ Performance threshold -- upper bound for video event rate at which a proposed 
+   compression method still outperforms the baseline.
+ Formats in this report:
+  + Pure AER -- designed to be as close to the standard definition of AER as
+    possible.
+    x (4 bytes), y (4 bytes), t (float), value(1 byte), polarity (1 byte)
+  
+  + CAER - same as Pure AER, but x,y aren't stored. Instead, all events for each
+    of the pixels (starting from top left pixel and moving left-to-right,
+    top-to-bottom) are listed together.
+    [for pixel (0,0)]: t (float), value (1 byte), polarity(1 byte), ...,  0-byte 
+    (indicating end of sequence for the current pixel)
+	[for pixel (1,0)]: t, value, polarity, ..., 0-byte
+	...
+
+Short summary of my progress:
+ + Modified performance threshold search to compute an average over multiple 
+   runs, which allows for estimation on arbitrary video dimensions and lengths.
+   These efforts proved to be in vain, as the script takes too long to run for
+   any meaningful number of iterations.
+
+ + For Pure AER, event threshold seems to peak at ~10% for 960x960 video,
+   however it grows with the length of the video (not significantly).
+
+   For CAER, threshold grows with bigger resolution and shorter length of the
+   video. On a video with 960x960 resolution of length 1s, it reached ~39%
+
+ + Analysed event rates for Virat dataset
+   For 100 videos, present in the dataset, the average event rate is ~18%.
+   Only 7 videos have a large event rate (>=40%), which makes compression with
+   event representation inefficent. All the others have event rate < 39%.
+   Roughly half of the videos (51) have event rate <= 15%.
+   There are 40 videos with event rate <= 10%, which means that even pure AER
+   representation can improve results from an entropy coder. 
+  
+   TODO: 
+      - Some additional tests have to be performed to ensure validity of these
+      results.
+      - Analyze why 7% of videos have such high event rate.
+
+   For now, conclusion is that event-based compression techniques should be 
+   largely beneficial for this dataset.
+
+ + Implemented lossy AER format
+   Same as Pure AER, but with a global threshold.
+   Events with value smaller or equal to the threshold are ignored.
+   Consecutive ignored values are accumulated, until their sum is > threshold,
+   in which case a new event with value of this sum is created at the current
+   timestamp.
+   With each new event written to the output, the sum of ignored values is reset
+
+ + Started to familiarize myself with Tensorflow Keras
+
+
+Although I am back to Saarbrucken, in view of current events, I would like to 
+ask you for a remote meeting to discuss my further steps.
+
+Thank you,
+Yaroslav
