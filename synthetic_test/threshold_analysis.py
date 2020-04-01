@@ -14,6 +14,7 @@ import string
 def log(msg, out):
     print(msg)
     out.write(f'{msg}\n')
+    out.flush()
 
 # Define script interface
 parser = argparse.ArgumentParser(description='Perform binary search of event \
@@ -24,7 +25,7 @@ parser.add_argument('sequence', help='type of sequences generated',
                              'rate_random_change'])
 parser.add_argument('--precision', type=int, default=1)
 parser.add_argument('--format', default='aer', choices=['aer', 'caer',
-    'aer_true'])
+    'aer_true', 'caer_true'])
 parser.add_argument('--coder', default='lpaq1')
 parser.add_argument('-d', dest='durations', type=int, nargs='+', 
                     default=[1, 2, 4, 8, 16])
