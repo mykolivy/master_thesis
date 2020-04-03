@@ -10,9 +10,10 @@ of the frames.
 import numpy as np
 import random
 import math
+from . import video_sequence
 
 class Config:
-    def __init__(self, resolution, fps, duration, dtype='int8', rate=None, val_range=None):
+    def __init__(self, resolution, fps, duration, dtype='int8', value=None, rate=None, val_range=None):
         self.width = resolution[0]
         self.height = resolution[1]
         self.res = (self.width, self.height)
@@ -22,24 +23,27 @@ class Config:
         self.dtype = dtype
         self.rate = rate
         self.range = val_range
+        self.value = value
 
+@video_sequence(name="single_color")
 class SingleColor:
     """Produces consequent frames of single color sequence with each
     iteration"""
-    def __init__(self, value, config):
+    def __init__(self, config):
         self.conf = config
-        self.frame = np.full((self.conf.width, self.conf.height), value)
+        self.frame = np.full((self.conf.width, self.conf.height), self.conf.value)
 
     def __iter__(self):
         for _ in range(self.conf.frame_num):
             yield self.frame
 
+@video_sequence(name="moving_edge")
 class MovingEdge:
     """Produces consequent frames of moving edge sequence with each iteration"""
     def __init__(self, config):
         self.conf = config
         self.frame = np.zeros((self.conf.width, self.conf.height), dtype=self.conf.dtype)
-        self.step_length = self.conf.width / self.conf.frame_num 
+        self.step_length = (self.conf.width - 1) / self.conf.frame_num 
         self.position = 0
 
     def __iter__(self):
@@ -50,11 +54,12 @@ class MovingEdge:
             self.frame[:, int(self.position)] = 255
             yield self.frame
 
+@video_sequence(name="random_pixel")
 class RandomPixel:
     """Produces consequent frames of random pixel seuquence with each
     iteration"""
-    def __init__(self, value_range, sequence_config):
-        self.conf = sequence_config
+    def __init__(self, config):
+        self.conf = config
     
     def __iter__(self):
         for _ in range(self.conf.frame_num):
@@ -64,6 +69,7 @@ class RandomPixel:
         return np.random.randint(self.conf.range[0], high=self.conf.range[1],
                size=(self.conf.width, self.conf.height))
 
+@video_sequence(name="checkers")
 class Checkers:
     """Produces consequent frames of checkerboard pattern with each iteration"""
     def __init__(self, config):
@@ -92,6 +98,7 @@ class Checkers:
                 row[0::2] = 255
         return mat
 
+@video_sequence(name="random_binary_change")
 class RandomBinaryChange:
     """Produces consequent frames where number of pixel flip their
     values. Number of such pixels depends on event rate specified"""
@@ -119,6 +126,7 @@ class RandomBinaryChange:
             else:
                 self.frame[i,j] = 0
 
+@video_sequence(name="random_change")
 class RandomChange:
     """Produces consequent frames of frames where number of pixel flip their
     values. Number of such pixels depends on event rate specified"""
@@ -143,6 +151,7 @@ class RandomChange:
             j = event - i*self.conf.width
             self.frame[i][j] = random.randrange(self.conf.range[0], self.conf.range[1])
 
+@video_sequence(name="random_chance_change")
 class RandomChanceChange:
     """Produces sequence of frames. In each frame each pixel has rate % chance
        to change their value in next frame"""

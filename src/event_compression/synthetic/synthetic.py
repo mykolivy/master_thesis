@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-#./moving_edge method output
-
 from PIL import Image
 import numpy as np
 import sys
@@ -11,21 +9,29 @@ import shutil
 import random
 import event_compression.codec.aer as aer
 import event_compression.codec.caer as caer
-import sequence as seq
-from events import format_iterators 
+from . import sequence as seq
 import argparse
+import event_compression.codec.util.io as io
+import tempfile
+from pathlib import Path
+from event_compression.codec import codecs
+from . import sequences
+
+formats = codecs()
+formats['raw'] = None # Register additional format
+sequences = sequences()
 
 # Define script interface
 parser = argparse.ArgumentParser(description='Perform binary search of event \
         rate performance threshold')
+parser.add_argument('format', help='format of the output file',
+                    choices=list(formats.keys()))
 parser.add_argument('sequence', help='type of sequences generated', 
-                    choices=['moving_edge', 'random_pixel', 'single_color', 
-                             'checkers', 'rate_random_flip',
-                             'rate_random_change', 'rate_random'])
+                    choices=list(sequences.keys()))
 parser.add_argument('-r', '--res', dest='res', action='store', default=[64, 64],
                     nargs=2, type=int,
                     help='Resolution of the generated sequences: y x')
-parser.add_argument('-f', '--fps', dest='fps', action='store', default=30,
+parser.add_argument('--fps', dest='fps', action='store', default=30,
                     help='Framerate of the generated sequences', type=int)
 parser.add_argument('-d', '--duration', dest='duration', action='store',
                     type=int, default=5,
@@ -35,41 +41,23 @@ parser.add_argument('--value', type=int, default=0)
 parser.add_argument('--range', type=int, default=[0, 255], nargs=2)
 parser.add_argument('out', help='output file')
 args = parser.parse_args()
+
 print(args)
 
-sequence_config = seq.SequenceConfig(args.res, args.fps, args.duration)
+sequence_config = seq.Config(args.res, args.fps, args.duration, value=args.value, rate=args.rate, val_range=args.range)
+frame_iterator = sequences[args.sequence](sequence_config)
 
-frame_iterators = {
-    'moving_edge': seq.MovingEdge(sequence_config), 
-    'random_pixel': seq.RandomPixel(
-                    (args.range[0],args.range[1]), sequence_config),
-    'single_color': seq.SingleColor(args.value, sequence_config), 
-    'checkers': seq.Checkers(sequence_config),
-    'rate_random_flip': seq.RandomBinaryChange(
-                        args.rate, sequence_config),
-    'rate_random_change': seq.RandomChange(args.rate,
-                          args.range, sequence_config),
-    'rate_random': seq.RandomChanceChange(args.rate, args.range,
-                   sequence_config)
-}
-
-out_name = '.'.join(args.out.split('.')[:-1]) 
-format = args.out.split('.')[-1]
-frame_iterator = frame_iterators[args.sequence]
-file_name = f"{out_name}.{format}"
-
-os.makedirs(os.path.dirname(file_name), exist_ok=True)
-out = open(file_name, "wb+")
-events.create_raw_file(out, args.res, args.fps, args.duration)
-events.save_frame(out, frame_iterator.start_frame)
-if format == 'raw':
-    os.mkdir(out_name)
-    for i, frame in enumerate(frame_iterator):
-        events.save_frame(out, frame)
-        Image.fromarray(np.uint8(frame)).save(f'{out_name}/img_{i}.pgm')
-    os.system(f"ffmpeg -f image2 -framerate 30 -i {out_name}/img_%d.pgm -c:v libx264 -preset veryslow -crf 0 -pix_fmt gray {out_name}.mp4")
-    shutil.rmtree(out_name)
-else:
-    format_iterator = format_iterators[format]
-    for chunk in next(format_iterator(frame_iterator)):
-        out.write(chunk)
+os.makedirs(os.path.dirname(args.out), exist_ok=True)
+with open(args.out, "wb+") as out:
+    io.create_raw_file(out, args.res, args.fps, args.duration)
+    if args.format == 'raw':
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            tmpdir = Path(tmpdirname)
+            
+            for i, frame in enumerate(frame_iterator):
+                io.save_frame(out, frame)
+                Image.fromarray(np.uint8(frame)).save(f'{tmpdirname}/img_{i}.pgm')
+            os.system(f"ffmpeg -f image2 -framerate 30 -i {tmpdirname}/img_%d.pgm -c:v libx264 -preset veryslow -crf 0 -pix_fmt gray {args.out}")
+    else:
+        for chunk in formats[args.format].encoder(frame_iterator):
+            out.write(chunk)

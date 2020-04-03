@@ -21,10 +21,11 @@ class AER:
 
     @classmethod
     def encoder(cls, frames) -> bytearray:
-        prev = frames.start_frame
+        frame_it = iter(frames)
+        prev = next(frame_it)
         overflow = bytearray()
 
-        for t, frame in enumerate(frames):
+        for t, frame in enumerate(frame_it):
             diff = np.subtract(frame, prev)
             result = bytearray()
             for i, row in enumerate(diff):
