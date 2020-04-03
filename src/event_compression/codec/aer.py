@@ -35,7 +35,7 @@ class AER:
                         continue
                     result += i.to_bytes(4, byteorder='big', signed=False)
                     result += j.to_bytes(4, byteorder='big', signed=False)
-                    result += bytearray(struct.pack("f", t))
+                    result += t.to_bytes(4, byteorder='big', signed=False) 
 
                     sign = 0 if value < 0 else 255
                     if abs(value) >= 127:
@@ -43,14 +43,15 @@ class AER:
                         overflow = int(abs(value) - 127)
                         result += i.to_bytes(4, byteorder='big', signed=False)
                         result += j.to_bytes(4, byteorder='big', signed=False)
-                        result += bytearray(struct.pack("f", t))
+                        result += t.to_bytes(4, byteorder='big', signed=False)
                         result += int(sign & overflow).to_bytes(1,
                                   byteorder='big', signed=False)
                     else:
                         result += int(sign & abs(value)).to_bytes(1,
                                 byteorder='big', signed=False)
-            prev = frame
-            yield result
+            prev = frame.copy()
+            if len(result) != 0:
+                yield result
     
     @classmethod
     def decoder(cls, events):
