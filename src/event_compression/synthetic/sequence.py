@@ -9,7 +9,7 @@ class SequenceConfig:
         self.duration = duration
         self.frame_num = fps * duration
 
-class MovingEdgeFrameIterator:
+class MovingEdge:
     """Produces consequent frames of moving edge sequence with each iteration"""
     def __init__(self, sequence_config):
         self.conf = sequence_config
@@ -23,11 +23,8 @@ class MovingEdgeFrameIterator:
         self.col_index = 0
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
         if self.index == self.conf.frame_num+1:
-            raise StopIteration
+            return
         self.position += self.move_ratio
         if self.index == 1:
             self.data = self.start_frame.copy()
@@ -36,9 +33,9 @@ class MovingEdgeFrameIterator:
                 self.data[i][:int(self.position)] = 255
             self.col_index=(self.col_index+1)%self.conf.res[1]
         self.index += 1
-        return self.data
+        yield self.data
 
-class SingleColorFrameIterator:
+class SingleColor:
     """Produces consequent frames of single color sequence with each
     iteration"""
     def __init__(self, value, sequence_config):
@@ -48,15 +45,12 @@ class SingleColorFrameIterator:
         self.start_frame = self.frame
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
         if self.index == self.conf.frame_num:
-            raise StopIteration
+            return
         self.index += 1
-        return self.frame
+        yield self.frame
 
-class RandomPixelFrameIterator:
+class RandomPixel:
     """Produces consequent frames of random pixel seuquence with each
     iteration"""
     def __init__(self, value_range, sequence_config):
@@ -66,19 +60,16 @@ class RandomPixelFrameIterator:
         self.start_frame = self.rand_frame() 
     
     def __iter__(self):
-        return self
-
-    def __next__(self):
         if self.index == self.conf.frame_num:
-            raise StopIteration
+            return
         self.index += 1
-        return self.rand_frame()
+        yield self.rand_frame()
 
     def rand_frame(self):
         return np.random.randint(self.value_range[0], high=self.value_range[1],
                size=self.conf.res)
 
-class CheckersFrameIterator:
+class Checkers:
     """Produces consequent frames of checkerboard pattern with each iteration"""
     def __init__(self, sequence_config):
         self.conf = sequence_config
@@ -88,16 +79,13 @@ class CheckersFrameIterator:
         self.start_frame = self.even
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
         if self.index == self.conf.frame_num:
-            raise StopIteration
+            return
         result = self.even
         if self.index % 2 != 0:
             result = self.odd
         self.index += 1
-        return result
+        yield result
 
     def frame(self, even):
         mat = np.zeros(self.conf.res)
@@ -113,7 +101,7 @@ class CheckersFrameIterator:
                 row[0::2] = 255
         return mat
 
-class RandomBinaryChangeFrameIterator:
+class RandomBinaryChange:
     """Produces consequent frames of frames where number of pixel flip their
     values. Number of such pixels depends on event rate specified"""
     def __init__(self, rate, sequence_config):
@@ -125,21 +113,18 @@ class RandomBinaryChangeFrameIterator:
         self.rate = rate
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
         if self.index == self.conf.frame_num:
-            raise StopIteration
+            return
         self.change_rand(self.rate)
         self.index += 1
-        return self.val
+        yield self.val
    
     def set_from_events(self, events):
         self.events = events.copy()
         for event in events:
             i = int(event / self.conf.res[1])
             j = event - i*self.conf.res[1]
-            self.val[i][j] = RandomBinaryChangeFrameIterator.invert(self.val[i][j])
+            self.val[i][j] = RandomBinaryChange.invert(self.val[i][j])
 
     def change_rand(self, rate):
         res_sq = self.conf.res[0] * self.conf.res[1]
@@ -153,7 +138,7 @@ class RandomBinaryChangeFrameIterator:
         else: 
             return 0
 
-class RandomChangeFrameIterator:
+class RandomChange:
     """Produces consequent frames of frames where number of pixel flip their
     values. Number of such pixels depends on event rate specified"""
     def __init__(self, rate, value_range, sequence_config):
@@ -166,14 +151,11 @@ class RandomChangeFrameIterator:
         self.rate = rate
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
         if self.index == self.conf.frame_num:
-            raise StopIteration
+            return
         self.change_rand(self.rate)
         self.index += 1
-        return self.val
+        yield self.val
    
     def set_from_events(self, events):
         self.events = events.copy()
@@ -194,7 +176,7 @@ class RandomChangeFrameIterator:
         else: 
             return 0
 
-class RandomChanceChangeIterator:
+class RandomChanceChange:
     """Produces sequence of frames. In each frame each pixel has rate % chance
        to change their value in next frame"""
     def __init__(self, rate, value_range, sequence_config):
@@ -207,11 +189,8 @@ class RandomChanceChangeIterator:
         self.rate = rate
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
         if self.index == self.conf.frame_num:
-            raise StopIteration
+            return
         self.frame = self.next.copy()
         for i, row in enumerate(self.next):
             for j, x in enumerate(row):
@@ -219,4 +198,4 @@ class RandomChanceChangeIterator:
                     self.next[i][j] = random.randrange(self.value_range[0], 
                                                       self.value_range[1])
         self.index += 1
-        return self.frame
+        yield self.frame

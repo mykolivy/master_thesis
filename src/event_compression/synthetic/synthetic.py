@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 #./moving_edge method output
-#./moving_edge method resolution fps duration output
-# method can be one of [moving_edge,pixel_random,single_color,checkers]
 
 from PIL import Image
 import numpy as np
@@ -11,7 +9,8 @@ import os
 import subprocess
 import shutil
 import random
-import events
+import event_compression.codec.aer as aer
+import event_compression.codec.caer as caer
 import sequence as seq
 from events import format_iterators 
 import argparse
@@ -41,16 +40,16 @@ print(args)
 sequence_config = seq.SequenceConfig(args.res, args.fps, args.duration)
 
 frame_iterators = {
-    'moving_edge': seq.MovingEdgeFrameIterator(sequence_config), 
-    'random_pixel': seq.RandomPixelFrameIterator(
+    'moving_edge': seq.MovingEdge(sequence_config), 
+    'random_pixel': seq.RandomPixel(
                     (args.range[0],args.range[1]), sequence_config),
-    'single_color': seq.SingleColorFrameIterator(args.value, sequence_config), 
-    'checkers': seq.CheckersFrameIterator(sequence_config),
-    'rate_random_flip': seq.RandomBinaryChangeFrameIterator(
+    'single_color': seq.SingleColor(args.value, sequence_config), 
+    'checkers': seq.Checkers(sequence_config),
+    'rate_random_flip': seq.RandomBinaryChange(
                         args.rate, sequence_config),
-    'rate_random_change': seq.RandomChangeFrameIterator(args.rate,
+    'rate_random_change': seq.RandomChange(args.rate,
                           args.range, sequence_config),
-    'rate_random': seq.RandomChanceChangeIterator(args.rate, args.range,
+    'rate_random': seq.RandomChanceChange(args.rate, args.range,
                    sequence_config)
 }
 
