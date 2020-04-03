@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 .pytest_cache/
+**/__pycache__
 
 **.aux
 **.swp
@@ -18,3 +19,4 @@ summary.pdf
 .gitmodules
 datasets
 bin
+.vscode
