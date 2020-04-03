@@ -93,6 +93,7 @@ class AERBinary:
     def encoder(cls, events):
         pass
 
+@codec(name="aer_lossy_threshold")
 class AERLossy:
     """
     Same as AER format, but lossy.
