@@ -12,20 +12,33 @@ import random
 import math
 
 class Config:
-    def __init__(self, resolution, fps, duration, dtype='int8'):
+    def __init__(self, resolution, fps, duration, dtype='int8', rate=None, val_range=None):
         self.width = resolution[0]
         self.height = resolution[1]
+        self.res = (self.width, self.height)
         self.fps = fps
         self.duration = duration
         self.frame_num = fps * duration
         self.dtype = dtype
+        self.rate = rate
+        self.range = val_range
+
+class SingleColor:
+    """Produces consequent frames of single color sequence with each
+    iteration"""
+    def __init__(self, value, config):
+        self.conf = config
+        self.frame = np.full((self.conf.width, self.conf.height), value)
+
+    def __iter__(self):
+        for _ in range(self.conf.frame_num):
+            yield self.frame
 
 class MovingEdge:
     """Produces consequent frames of moving edge sequence with each iteration"""
     def __init__(self, config):
         self.conf = config
-        self.index = 1
-        self.frame = np.zeros(self.conf.res, dtype=self.conf.dtype)
+        self.frame = np.zeros((self.conf.width, self.conf.height), dtype=self.conf.dtype)
         self.step_length = self.conf.width / self.conf.frame_num 
         self.position = 0
 
@@ -37,57 +50,33 @@ class MovingEdge:
             self.frame[:, int(self.position)] = 255
             yield self.frame
 
-class SingleColor:
-    """Produces consequent frames of single color sequence with each
-    iteration"""
-    def __init__(self, value, sequence_config):
-        self.conf = sequence_config
-        self.index = 1
-        self.frame = np.full((self.conf.res), value)
-        self.start_frame = self.frame
-
-    def __iter__(self):
-        if self.index == self.conf.frame_num:
-            return
-        self.index += 1
-        yield self.frame
-
 class RandomPixel:
     """Produces consequent frames of random pixel seuquence with each
     iteration"""
     def __init__(self, value_range, sequence_config):
         self.conf = sequence_config
-        self.index = 1
-        self.value_range = value_range
-        self.start_frame = self.rand_frame() 
     
     def __iter__(self):
-        if self.index == self.conf.frame_num:
-            return
-        self.index += 1
-        yield self.rand_frame()
+        for _ in range(self.conf.frame_num):
+            yield self.rand_frame()
 
     def rand_frame(self):
-        return np.random.randint(self.value_range[0], high=self.value_range[1],
-               size=self.conf.res)
+        return np.random.randint(self.conf.range[0], high=self.conf.range[1],
+               size=(self.conf.width, self.conf.height))
 
 class Checkers:
     """Produces consequent frames of checkerboard pattern with each iteration"""
-    def __init__(self, sequence_config):
-        self.conf = sequence_config
-        self.index = 1
+    def __init__(self, config):
+        self.conf = config
         self.even = self.frame(even=True)
         self.odd = self.frame(even=False)
-        self.start_frame = self.even
 
     def __iter__(self):
-        if self.index == self.conf.frame_num:
-            return
-        result = self.even
-        if self.index % 2 != 0:
-            result = self.odd
-        self.index += 1
-        yield result
+        for i in range(self.conf.frame_num):
+            if i%2 == 0:
+                yield self.even
+            else:
+                yield self.odd
 
     def frame(self, even):
         mat = np.zeros(self.conf.res)
@@ -104,100 +93,68 @@ class Checkers:
         return mat
 
 class RandomBinaryChange:
-    """Produces consequent frames of frames where number of pixel flip their
+    """Produces consequent frames where number of pixel flip their
     values. Number of such pixels depends on event rate specified"""
-    def __init__(self, rate, sequence_config):
-        self.conf = sequence_config
-        self.index = 1
-        self.start_frame = np.zeros(self.conf.res)
-        self.val = self.start_frame.copy()
-        self.events = {} 
-        self.rate = rate
+    def __init__(self, config):
+        self.conf = config
+        self.frame = np.zeros(self.conf.res)
+        self.res_sq = self.conf.width * self.conf.height
 
     def __iter__(self):
-        if self.index == self.conf.frame_num:
-            return
-        self.change_rand(self.rate)
-        self.index += 1
-        yield self.val
-   
-    def set_from_events(self, events):
-        self.events = events.copy()
-        for event in events:
-            i = int(event / self.conf.res[1])
-            j = event - i*self.conf.res[1]
-            self.val[i][j] = RandomBinaryChange.invert(self.val[i][j])
+        for _ in range(self.conf.frame_num):
+            self.change_rand()
+            yield self.frame
 
-    def change_rand(self, rate):
-        res_sq = self.conf.res[0] * self.conf.res[1]
-        num = int(res_sq * rate)
-        population = range(0, res_sq)
+    def change_rand(self):
+        num = int(self.res_sq * self.conf.rate)
+        population = range(0, self.res_sq)
         self.set_from_events(random.sample(population, num))
 
-    def invert(val):
-        if val == 0:
-            return 255
-        else: 
-            return 0
+    def set_from_events(self, events):
+        for event in events:
+            i = int(event / self.conf.width)
+            j = event - i*self.conf.width
+            if self.frame[i,j] == 0:
+                self.frame[i,j] = 255
+            else:
+                self.frame[i,j] = 0
 
 class RandomChange:
     """Produces consequent frames of frames where number of pixel flip their
     values. Number of such pixels depends on event rate specified"""
-    def __init__(self, rate, value_range, sequence_config):
-        self.conf = sequence_config
-        self.index = 1
-        self.value_range = value_range
-        self.start_frame = np.zeros(self.conf.res)
-        self.val = self.start_frame.copy()
-        self.events = {} 
-        self.rate = rate
+    def __init__(self, config):
+        self.conf = config
+        self.frame = np.zeros(self.conf.res)
+        self.res_sq = self.conf.widht * self.conf.height
 
     def __iter__(self):
-        if self.index == self.conf.frame_num:
-            return
-        self.change_rand(self.rate)
-        self.index += 1
-        yield self.val
+        for _ in range(self.conf.frame_num):
+            self.change_rand()
+            yield self.frame
+    
+    def change_rand(self):
+        num = int(self.res_sq * self.conf.rate)
+        population = range(0, self.res_sq)
+        self.set_from_events(random.sample(population, num))
    
     def set_from_events(self, events):
-        self.events = events.copy()
         for event in events:
-            i = int(event / self.conf.res[1])
-            j = event - i*self.conf.res[1]
-            self.val[i][j] = random.randrange(self.value_range[0], self.value_range[1])
-    
-    def change_rand(self, rate):
-        res_sq = self.conf.res[0] * self.conf.res[1]
-        num = int(res_sq * rate)
-        population = range(0, res_sq)
-        self.set_from_events(random.sample(population, num))
-
-    def invert(val):
-        if val == 0:
-            return 255
-        else: 
-            return 0
+            i = int(event / self.conf.width)
+            j = event - i*self.conf.width
+            self.frame[i][j] = random.randrange(self.conf.range[0], self.conf.range[1])
 
 class RandomChanceChange:
     """Produces sequence of frames. In each frame each pixel has rate % chance
        to change their value in next frame"""
-    def __init__(self, rate, value_range, sequence_config):
-        self.conf = sequence_config
-        self.index = 1
-        self.value_range = value_range
-        self.start_frame = np.zeros(self.conf.res)
+    def __init__(self, config):
+        self.conf = config
         self.frame = np.zeros(self.conf.res)
-        self.next = self.frame
-        self.rate = rate
 
     def __iter__(self):
-        if self.index == self.conf.frame_num:
-            return
-        self.frame = self.next.copy()
-        for i, row in enumerate(self.next):
-            for j, x in enumerate(row):
-                if random.uniform(0, 1) <= self.rate:
-                    self.next[i][j] = random.randrange(self.value_range[0], 
-                                                      self.value_range[1])
-        self.index += 1
-        yield self.frame
+        for _ in range(self.conf.frame_num):
+            for i, row in enumerate(self.frame):
+                for j, _ in enumerate(row):
+                    if random.uniform(0, 1) <= self.conf.rate:
+                        self.frame[i][j] = random.randrange(self.conf.range[0], 
+                                                        self.conf.range[1])
+            yield self.frame
