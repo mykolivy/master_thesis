@@ -1,39 +1,41 @@
+"""
+Define synthetic video sequences used for testing.
+
+Constraint:
+Do not change the frames objects that are returned during iteration.
+If needed, copy first.
+For better performance, the sequences return and reuse internal representation
+of the frames.
+"""
 import numpy as np
 import random
 import math
 
-class SequenceConfig:
-    def __init__(self, resolution, fps, duration):
-        self.res = list(reversed(resolution))
+class Config:
+    def __init__(self, resolution, fps, duration, dtype='int8'):
+        self.width = resolution[0]
+        self.height = resolution[1]
         self.fps = fps
         self.duration = duration
         self.frame_num = fps * duration
+        self.dtype = dtype
 
 class MovingEdge:
     """Produces consequent frames of moving edge sequence with each iteration"""
-    def __init__(self, sequence_config):
-        self.conf = sequence_config
+    def __init__(self, config):
+        self.conf = config
         self.index = 1
-        self.data = np.zeros(self.conf.res)
-        self.start_frame = self.data.copy()
-        self.move_ratio = self.conf.res[1] / self.conf.frame_num 
+        self.frame = np.zeros(self.conf.res, dtype=self.conf.dtype)
+        self.step_length = self.conf.width / self.conf.frame_num 
         self.position = 0
-        self.row = np.zeros(self.conf.res[1])
-        print(self.data.shape)
-        self.col_index = 0
 
     def __iter__(self):
-        if self.index == self.conf.frame_num+1:
-            return
-        self.position += self.move_ratio
-        if self.index == 1:
-            self.data = self.start_frame.copy()
-        else:
-            for i in range(0,self.conf.res[0]):
-                self.data[i][:int(self.position)] = 255
-            self.col_index=(self.col_index+1)%self.conf.res[1]
-        self.index += 1
-        yield self.data
+        yield self.frame
+
+        for _ in range(self.conf.frame_num):
+            self.position += self.step_length
+            self.frame[:, int(self.position)] = 255
+            yield self.frame
 
 class SingleColor:
     """Produces consequent frames of single color sequence with each
