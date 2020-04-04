@@ -13,7 +13,7 @@ import math
 from . import video_sequence
 
 class Config:
-    def __init__(self, resolution, fps, duration, dtype='int8', value=None, rate=None, val_range=None):
+    def __init__(self, resolution, fps, duration, dtype='uint8', value=None, rate=None, val_range=None):
         self.width = resolution[0]
         self.height = resolution[1]
         self.res = (self.width, self.height)
@@ -31,7 +31,7 @@ class SingleColor:
     iteration"""
     def __init__(self, config):
         self.conf = config
-        self.frame = np.full((self.conf.width, self.conf.height), self.conf.value)
+        self.frame = np.full((self.conf.width, self.conf.height), self.conf.value, dtype=self.conf.dtype)
 
     def __iter__(self):
         for _ in range(self.conf.frame_num):
@@ -49,7 +49,7 @@ class MovingEdge:
     def __iter__(self):
         yield self.frame
 
-        for _ in range(self.conf.frame_num):
+        for _ in range(self.conf.frame_num-1):
             self.position += self.step_length
             self.frame[:, int(self.position)] = 255
             yield self.frame
@@ -63,7 +63,7 @@ class RandomPixel:
     
     def __iter__(self):
         for _ in range(self.conf.frame_num):
-            yield self.rand_frame()
+            yield self.rand_frame().astype(self.conf.dtype)
 
     def rand_frame(self):
         return np.random.randint(self.conf.range[0], high=self.conf.range[1],
@@ -96,7 +96,7 @@ class Checkers:
                 row[1::2] = 255
             for row in mat[1::2]:
                 row[0::2] = 255
-        return mat
+        return mat.astype(self.conf.dtype)
 
 @video_sequence(name="random_binary_change")
 class RandomBinaryChange:
@@ -104,7 +104,7 @@ class RandomBinaryChange:
     values. Number of such pixels depends on event rate specified"""
     def __init__(self, config):
         self.conf = config
-        self.frame = np.zeros(self.conf.res)
+        self.frame = np.zeros(self.conf.res, dtype=self.conf.dtype)
         self.res_sq = self.conf.width * self.conf.height
 
     def __iter__(self):
@@ -132,8 +132,8 @@ class RandomChange:
     values. Number of such pixels depends on event rate specified"""
     def __init__(self, config):
         self.conf = config
-        self.frame = np.zeros(self.conf.res)
-        self.res_sq = self.conf.widht * self.conf.height
+        self.frame = np.zeros(self.conf.res, dtype=self.conf.dtype)
+        self.res_sq = self.conf.width * self.conf.height
 
     def __iter__(self):
         for _ in range(self.conf.frame_num):
@@ -157,7 +157,7 @@ class RandomChanceChange:
        to change their value in next frame"""
     def __init__(self, config):
         self.conf = config
-        self.frame = np.zeros(self.conf.res)
+        self.frame = np.zeros(self.conf.res, dtype=self.conf.dtype)
 
     def __iter__(self):
         for _ in range(self.conf.frame_num):
