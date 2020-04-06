@@ -11,9 +11,10 @@ import numpy as np
 import random
 import math
 from . import video_sequence
+from copy import copy
 
 class Config:
-    def __init__(self, resolution, fps, duration, dtype='uint8', value=None, rate=None, val_range=None):
+    def __init__(self, resolution, fps, duration, dtype='uint8', value=0, rate=0, val_range=(0,255)):
         self.width = resolution[0]
         self.height = resolution[1]
         self.res = (self.width, self.height)
@@ -36,6 +37,9 @@ class SingleColor:
     def __iter__(self):
         for _ in range(self.conf.frame_num):
             yield self.frame
+    
+    def __len__(self):
+        return self.conf.frame_num
 
 @video_sequence(name="moving_edge")
 class MovingEdge:
@@ -53,6 +57,9 @@ class MovingEdge:
             self.position += self.step_length
             self.frame[:, int(self.position)] = 255
             yield self.frame
+    
+    def __len__(self):
+        return self.conf.frame_num
 
 @video_sequence(name="random_pixel")
 class RandomPixel:
@@ -68,6 +75,9 @@ class RandomPixel:
     def rand_frame(self):
         return np.random.randint(self.conf.range[0], high=self.conf.range[1],
                size=(self.conf.width, self.conf.height))
+    
+    def __len__(self):
+        return self.conf.frame_num
 
 @video_sequence(name="checkers")
 class Checkers:
@@ -97,6 +107,9 @@ class Checkers:
             for row in mat[1::2]:
                 row[0::2] = 255
         return mat.astype(self.conf.dtype)
+    
+    def __len__(self):
+        return self.conf.frame_num
 
 @video_sequence(name="random_binary_change")
 class RandomBinaryChange:
@@ -125,6 +138,9 @@ class RandomBinaryChange:
                 self.frame[i,j] = 255
             else:
                 self.frame[i,j] = 0
+    
+    def __len__(self):
+        return self.conf.frame_num
 
 @video_sequence(name="random_change")
 class RandomChange:
@@ -150,6 +166,9 @@ class RandomChange:
             i = int(event / self.conf.width)
             j = event - i*self.conf.width
             self.frame[i][j] = random.randrange(self.conf.range[0], self.conf.range[1])
+    
+    def __len__(self):
+        return self.conf.frame_num
 
 @video_sequence(name="random_chance_change")
 class RandomChanceChange:
@@ -167,3 +186,6 @@ class RandomChanceChange:
                         self.frame[i][j] = random.randrange(self.conf.range[0], 
                                                         self.conf.range[1])
             yield self.frame
+    
+    def __len__(self):
+        return self.conf.frame_num
