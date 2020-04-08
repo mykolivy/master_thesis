@@ -53,7 +53,7 @@ def simple_seq():
 def reduce(encoder):
     return functools.reduce(lambda x, y: x+y, encoder, bytearray())
 
-def common_test(cls=None):
+def invertability_test(cls=None, threshold=0):
     """
     Define common tests for all aer codecs.
 
@@ -68,12 +68,13 @@ def common_test(cls=None):
             code = reduce(instance.cls.encoder(sequence))
             decoder = instance.cls.decoder(code)
             frames = [x.copy() for x in decoder]
-            for i, f in enumerate(frames):
-                np.testing.assert_equal(f, correct[i])
+            for t, f in enumerate(frames):
+                for index, value in np.ndenumerate(f):
+                    assert abs(int(value) - int(correct[t][index])) <= threshold
         
         #Add all invertability tests
         for name, sequence in synthetic.sequences().items():
-            config = Config((3,3),10,1,value=127,rate=0.1)
+            config = Config((64,64),10,3,value=127,rate=0.2)
             np.random.seed(seed=0)
             correct_seq = [x.copy() for x in sequence(config)]
             seq = copy.deepcopy(correct_seq)
@@ -81,7 +82,7 @@ def common_test(cls=None):
                 return lambda inst: test_invertability(inst,seq,correct_seq)
             setattr(_cls, f'test_invertability_{name}', caller(seq, correct_seq))
         fn = lambda inst: test_invertability(inst, simple_seq(), simple_seq())
-        setattr(_cls, f'test_{cls.__name__}_invertability_simple', fn)
+        setattr(_cls, f'test_invertability_simple', fn)
         
         return _cls
     return decorate
@@ -89,7 +90,7 @@ def common_test(cls=None):
 def test_init():
 	assert codec.codecs()
 
-@common_test(aer.AER)
+@invertability_test(aer.AER)
 class TestAER:
     def test_encoder(self):
         sequence = simple_seq()
@@ -101,6 +102,135 @@ class TestAER:
             1,1,3,248,0,
             0,0,4,255,1,
             1,1,4,7,0)
+        assert code == correct_code
+
+    def test_encode_moving_edge(self):
+        """
+        [[0 0 0]
+        [0 0 0]
+        [0 0 0]]
+
+        [[255   0   0]
+        [255   0   0]
+        [255   0   0]]
+
+        [[255 255   0]
+        [255 255   0]
+        [255 255   0]]
+
+        [[255 255   0]
+        [255 255   0]
+        [255 255   0]]
+        """
+        #pdb.set_trace()
+        seq = MovingEdge(Config((3,3), 2, 2))
+        code = reduce(self.cls.encoder(seq))
+        correct_code = struct.pack('>3I 9B 3I2B 3I2B 3I2B 3I2B 3I2B 3I2B',
+            3,3,4,
+            0,0,0,0,0,0,0,0,0,
+            
+            0,0,0,255,1,
+            1,0,0,255,1,
+            2,0,0,255,1,
+
+            0,1,1,255,1,
+            1,1,1,255,1,
+            2,1,1,255,1)
+        
+        assert code == correct_code
+    
+    def test_encode_single_color(self):
+        seq = SingleColor(Config((3,3),4,1,value=127))
+        code = reduce(self.cls.encoder(seq))
+        correct_code = struct.pack('>3I 9B',
+            3,3,4,
+            127,127,127,127,127,127,127,127,127)
+        assert code == correct_code
+
+    def test_decode_single_color(self):
+        seq = [x for x in SingleColor(Config((3,3),4,1,value=127))]
+        code = struct.pack('>3I 9B',
+            3,3,4,
+            127,127,127,127,127,127,127,127,127)
+        frames = [x.copy() for x in self.cls.decoder(code)]
+        for i, frame in enumerate(frames):
+            np.testing.assert_equal(frame, seq[i])
+
+@invertability_test(aer.AERLossy, threshold=5)
+class TestAERLossy:
+    def test_encoder(self):
+        sequence = simple_seq()
+        code = reduce(self.cls.encoder(sequence, threshold=5))
+        correct_code = struct.pack('>3I 9B 3I2B 3I2B 3I2B 3I2B',
+            3,3,6,
+            0,0,0,0,0,0,0,0,0,
+            1,1,1,255,1,
+            1,1,3,248,0,
+            0,0,4,255,1,
+            1,1,4,7,0)
+        assert code == correct_code
+
+    def test_encoder_with_skips(self):
+        sequence = [
+            np.array([
+                [0,0,0],
+                [0,0,0],
+                [0,0,0]
+            ], dtype='uint8'),
+            np.array([
+                [0,0,0],
+                [0,2,0],
+                [0,0,0]
+            ], dtype='uint8'),
+            np.array([
+                [0,0,0],
+                [0,100,0],
+                [0,0,0]
+            ], dtype='uint8'),
+            np.array([
+                [0,0,0],
+                [0,97,0],
+                [0,0,0]
+            ], dtype='uint8'),
+            np.array([
+                [0,0,0],
+                [0,96,0],
+                [0,0,0]
+            ], dtype='uint8'),
+            np.array([
+                [0,0,0],
+                [0,98,0],
+                [0,0,0]
+            ], dtype='uint8'),
+            np.array([
+                [0,0,0],
+                [0,97,0],
+                [0,0,0]
+            ], dtype='uint8'),
+            np.array([
+                [0,0,0],
+                [0,94,0],
+                [0,0,0]
+            ], dtype='uint8'),
+            np.array([
+                [0,0,0],
+                [0,93,0],
+                [0,0,0]
+            ], dtype='uint8'),
+            np.array([
+                [0,0,0],
+                [0,255,0],
+                [0,0,0]
+            ], dtype='uint8')
+        ]
+        code = reduce(self.cls.encoder(sequence))
+        correct_code = struct.pack(f'>3I 9B 3I2B 3I2B 3I2B',
+            3,3,len(sequence),
+            0,0,0,0,0,0,0,0,0,
+            
+            1,1,1,100,1,
+            1,1,6,  6,0,
+            1,1,8,161,1)
         assert code == correct_code
 
     def test_encode_moving_edge(self):
