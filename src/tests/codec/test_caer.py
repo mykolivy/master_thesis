@@ -86,27 +86,6 @@ class TestCAER:
 		assert code == correct_code
 
 	def test_encode_moving_edge(self):
-		"""
-        [[0 0 0]
-        [0 0 0]
-        [0 0 0]]
-
-        [[255   0   0]
-        [255   0   0]
-        [255   0   0]]
-
-        [[255 255   0]
-        [255 255   0]
-        [255 255   0]]
-
-        [[255 255   0]
-        [255 255   0]
-        [255 255   0]]
-
-				Events:
-					
-        """
-		#pdb.set_trace()
 		seq = MovingEdge(Config((3, 3), 2, 2))
 		code = reduce(self.cls.encoder(seq))
 		correct_code = struct.pack('>3I 9B BBIB BBIB B BBIB BBIB B BBIB BBIB B', 3,
@@ -120,6 +99,71 @@ class TestCAER:
 		code = reduce(self.cls.encoder(seq))
 		correct_code = struct.pack('>3I 18B', 3, 3, 4, 127, 127, 127, 127, 127, 127,
 		                           127, 127, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+		assert code == correct_code
+
+	def test_decode_single_color(self):
+		seq = [x.copy() for x in SingleColor(Config((3, 3), 4, 1, value=127))]
+		code = struct.pack('>3I 18B', 3, 3, 4, 127, 127, 127, 127, 127, 127, 127,
+		                   127, 127, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+		frames = [x.copy() for x in self.cls.decoder(code)]
+		for i, frame in enumerate(frames):
+			np.testing.assert_equal(frame, seq[i])
+
+	def test_decode_moving_edge(self):
+		seq = [x.copy() for x in MovingEdge(Config((3, 3), 2, 2))]
+		code = struct.pack('>3I 9B BBIB BBIB B BBIB BBIB B BBIB BBIB B', 3, 3, 4, 0,
+		                   0, 0, 0, 0, 0, 0, 0, 0, 255, 1, 0, 0, 255, 1, 1, 0, 0,
+		                   255, 1, 0, 0, 255, 1, 1, 0, 0, 255, 1, 0, 0, 255, 1, 1,
+		                   0, 0)
+		frames = [x.copy() for x in self.cls.decoder(code)]
+		for i, frame in enumerate(frames):
+			np.testing.assert_equal(frame, seq[i])
+
+
+@invertability_test(caer.CAERLossy, threshold=5)
+class TestCAERLossy:
+	"""
+	Produce sequence with events (x, y, t, v, p):
+			(1, 1, 1, 255, +)
+			(1, 1, 3, 248, -)
+			(0, 0, 4, 255, +)
+			(1, 1, 4, 7,   -)
+	"""
+	def test_encoder(self):
+		sequence = simple_seq()
+		code = reduce(self.cls.encoder(sequence, threshold=5))
+		correct_code = struct.pack('>3I 9B BBIB B B B BBIBBIBBIB B B B B', 3, 3, 6,
+		                           0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 1, 4, 0, 0, 0, 0,
+		                           255, 1, 1, 248, 0, 3, 7, 0, 4, 0, 0, 0, 0, 0)
+		assert code == correct_code
+
+	def test_encoder_with_skips(self):
+		sequence = [
+		    np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]], dtype='uint8'),
+		    np.array([[0, 0, 0], [0, 2, 0], [0, 0, 0]], dtype='uint8'),
+		    np.array([[0, 0, 0], [0, 100, 0], [0, 0, 0]], dtype='uint8'),
+		    np.array([[0, 0, 0], [0, 97, 0], [0, 0, 0]], dtype='uint8'),
+		    np.array([[0, 0, 0], [0, 96, 0], [0, 0, 0]], dtype='uint8'),
+		    np.array([[0, 0, 0], [0, 98, 0], [0, 0, 0]], dtype='uint8'),
+		    np.array([[0, 0, 0], [0, 97, 0], [0, 0, 0]], dtype='uint8'),
+		    np.array([[0, 0, 0], [0, 94, 0], [0, 0, 0]], dtype='uint8'),
+		    np.array([[0, 0, 0], [0, 93, 0], [0, 0, 0]], dtype='uint8'),
+		    np.array([[0, 0, 0], [0, 255, 0], [0, 0, 0]], dtype='uint8')
+		]
+		code = reduce(self.cls.encoder(sequence, threshold=5))
+		correct_code = struct.pack(f'>3I 9B BBBB 2BI2BI2BIB BBBB', 3, 3,
+		                           len(sequence), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		                           0, 0, 100, 1, 1, 6, 0, 6, 161, 1, 8, 0, 0, 0, 0,
+		                           0)
+		assert code == correct_code
+
+	def test_encode_moving_edge(self):
+		seq = MovingEdge(Config((3, 3), 2, 2))
+		code = reduce(self.cls.encoder(seq))
+		correct_code = struct.pack('>3I 9B BBIB BBIB B BBIB BBIB B BBIB BBIB B', 3,
+		                           3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 1, 0, 0,
+		                           255, 1, 1, 0, 0, 255, 1, 0, 0, 255, 1, 1, 0, 0,
+		                           255, 1, 0, 0, 255, 1, 1, 0, 0)
 		assert code == correct_code
 
 	def test_decode_single_color(self):

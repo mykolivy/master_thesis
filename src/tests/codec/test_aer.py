@@ -96,23 +96,6 @@ class TestAER:
 		assert code == correct_code
 
 	def test_encode_moving_edge(self):
-		"""
-		[[0 0 0]
-		[0 0 0]
-		[0 0 0]]
-
-		[[255   0   0]
-		[255   0   0]
-		[255   0   0]]
-
-		[[255 255   0]
-		[255 255   0]
-		[255 255   0]]
-
-		[[255 255   0]
-		[255 255   0]
-		[255 255   0]]
-		"""
 		seq = MovingEdge(Config((3, 3), 2, 2))
 		code = reduce(self.cls.encoder(seq))
 		correct_code = struct.pack('>3I 9B 3I2B 3I2B 3I2B 3I2B 3I2B 3I2B', 3, 3, 4,
@@ -168,23 +151,6 @@ class TestAERLossy:
 		assert code == correct_code
 
 	def test_encode_moving_edge(self):
-		"""
-		[[0 0 0]
-		[0 0 0]
-		[0 0 0]]
-
-		[[255   0   0]
-		[255   0   0]
-		[255   0   0]]
-
-		[[255 255   0]
-		[255 255   0]
-		[255 255   0]]
-
-		[[255 255   0]
-		[255 255   0]
-		[255 255   0]]
-		"""
 		#pdb.set_trace()
 		seq = MovingEdge(Config((3, 3), 2, 2))
 		code = reduce(self.cls.encoder(seq))
