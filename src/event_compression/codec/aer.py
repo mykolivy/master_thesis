@@ -151,15 +151,14 @@ class AERLossyAccumulated:
 		"""
 		frame_it = iter(frames)
 		prev = next(frame_it).copy()
-		accumulated = np.zeros(prev.shape, dtype='int16')
 
 		yield from AER.header(len(frames), prev)
 
 		result = bytearray()
 		for (t, i, j, value) in events_from_frames(frames):
-			if abs(value) != 0:
+			if abs(value) > threshold:
 				polarity = get_polarity(value)
-				cls.append_event(result, i, j, t, abs(value), polarity)
+				AER.append_event(result, i, j, t, abs(value), polarity)
 		yield result
 
 	@classmethod
