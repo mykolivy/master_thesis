@@ -33,20 +33,12 @@ class AER:
 
 		yield from cls.header(len(frames), prev)
 
-		for t, frame in enumerate(frame_it):
-			diff = np.subtract(frame, prev, dtype='int16')
-			result = bytearray()
-			for (i, j), value in np.ndenumerate(diff):
-				value = int(value)
-				if value == 0:
-					continue
-
+		result = bytearray()
+		for (t, i, j, value) in events_from_frames(frames):
+			if abs(value) != 0:
 				polarity = get_polarity(value)
 				cls.append_event(result, i, j, t, abs(value), polarity)
-
-			prev = frame.copy()
-			if len(result) != 0:
-				yield result
+		yield result
 
 	@classmethod
 	def decoder(cls, data) -> np.ndarray:
@@ -163,20 +155,12 @@ class AERLossyAccumulated:
 
 		yield from AER.header(len(frames), prev)
 
-		for t, frame in enumerate(frame_it):
-			diff = np.subtract(frame, prev, dtype='int16')
-			result = bytearray()
-			for (i, j), value in np.ndenumerate(diff):
-				accumulated[i, j] += value
-				if abs(accumulated[i, j]) > threshold:
-					polarity = get_polarity(accumulated[i, j])
-					AER.append_event(result, i, j, t, abs(accumulated[i, j]), polarity)
-					accumulated[i, j] = 0
-
-			to_update = abs(diff) > threshold
-			prev[to_update] = frame[to_update]
-			if len(result) != 0:
-				yield result
+		result = bytearray()
+		for (t, i, j, value) in events_from_frames(frames):
+			if abs(value) != 0:
+				polarity = get_polarity(value)
+				cls.append_event(result, i, j, t, abs(value), polarity)
+		yield result
 
 	@classmethod
 	def decoder(cls, data) -> np.ndarray:

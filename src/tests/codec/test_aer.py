@@ -3,6 +3,7 @@ import src.event_compression.synthetic as synthetic
 from src.event_compression.synthetic.sequence import *
 import src.event_compression.codec as codec
 from src.event_compression.codec import aer as aer
+from src.event_compression.codec.util import events_from_frames
 import itertools
 import functools
 import numpy as np
@@ -75,6 +76,15 @@ def test_init():
 	assert codec.codecs()
 
 
+def test_events_from_frames_moving_edge():
+	correct_events = [(0, 0, 0, 255), (0, 1, 0, 255), (0, 2, 0, 255),
+	                  (1, 0, 1, 255), (1, 1, 1, 255), (1, 2, 1, 255)]
+	seq = MovingEdge(Config((3, 3), 2, 2))
+	events = [x for x in events_from_frames(seq)]
+	for i, event in enumerate(events):
+		assert event == correct_events[i]
+
+
 @invertability_test(aer.AER)
 class TestAER:
 	def test_encoder(self):
@@ -103,7 +113,6 @@ class TestAER:
 		[255 255   0]
 		[255 255   0]]
 		"""
-		#pdb.set_trace()
 		seq = MovingEdge(Config((3, 3), 2, 2))
 		code = reduce(self.cls.encoder(seq))
 		correct_code = struct.pack('>3I 9B 3I2B 3I2B 3I2B 3I2B 3I2B 3I2B', 3, 3, 4,
