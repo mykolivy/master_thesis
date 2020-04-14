@@ -109,6 +109,22 @@ def get_polarity(value):
 	return 0 if value < 0 else 1
 
 
+def apply_polarity(value, polarity):
+	"""
+	Combine value and polarity.
+
+	# Arguments
+		value: int >= 0, Absolute value.
+		polarity: int, Value indicating the sign.
+			Value is considered to be negative when `polarity == 0`.
+			Any non-zero polarity indicates positive value.
+	
+	# Return
+	Integer with absolute value of `value` and sign indicated by `polarity`.
+	"""
+	return value if polarity != 0 else -value
+
+
 def to_bytes(value, bytes_num, order='big', signed=False) -> bytes:
 	"""
 	Convert value to bytes representation.

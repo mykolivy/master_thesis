@@ -1,7 +1,7 @@
 """Define AER-like codecs"""
 import numpy as np
 import struct
-from .util import codec
+from .util import *
 import functools
 import itertools
 import pdb
@@ -22,25 +22,16 @@ class AER:
 			For positive values: polarity > 0.
 			For negative values: polarity = 0.
 	"""
-
-	event_size = 14
-	buffer = bytearray(event_size)
-
 	@classmethod
 	def encoder(cls, frames) -> bytearray:
 		"""
-        Yield binary representation of events from sequence of video frames
-        for single frame at a time.
-        """
-		#pdb.set_trace()
+		Yield binary representation of events from sequence of video frames
+		for single frame at a time.
+		"""
 		frame_it = iter(frames)
 		prev = next(frame_it).copy()
 
-		#Encode resolution and number of frames
-		yield struct.pack('>3I', prev.shape[0], prev.shape[1], len(frames))
-
-		#Encode first frame
-		yield prev.tobytes()
+		yield from cls.header(len(frames), prev)
 
 		for t, frame in enumerate(frame_it):
 			diff = np.subtract(frame, prev, dtype='int16')
@@ -50,11 +41,8 @@ class AER:
 				if value == 0:
 					continue
 
-				polarity = 0 if value < 0 else 1
+				polarity = get_polarity(value)
 				cls._append_event(result, i, j, t, abs(value), polarity)
-
-			#Mark end of events for timestamp t
-			#result += int(0).to_bytes(1, byteorder='big', signed=False)
 
 			prev = frame.copy()
 			if len(result) != 0:
@@ -64,18 +52,18 @@ class AER:
 	def decoder(cls, data) -> np.ndarray:
 		data_it = iter(data)
 
-		header = struct.unpack('>3I', cls.take_next(data_it, 12))
+		header = struct.unpack('>3I', take_next(data_it, 12))
 		res = (header[0], header[1])
 		frame_num = header[2]
 
-		frame = cls._decode_first_frame(data_it, res)
+		frame = decode_full_frame(data_it, res)
 		yield frame
 
 		t = 0
 		prev_t = 0
 		while True:
 			try:
-				buffer = cls.take_next(data_it, 14)
+				buffer = take_next(data_it, 14)
 			except:
 				break
 
@@ -86,7 +74,7 @@ class AER:
 					yield frame
 				prev_t = t
 
-			value = value if polarity == 1 else -value
+			value = apply_polarity(value, polarity)
 			frame[i, j] += value
 		yield frame
 
@@ -94,26 +82,18 @@ class AER:
 			yield frame
 
 	@staticmethod
-	def take_next(it, n):
-		result = bytearray()
-		for _ in range(n):
-			result += next(it).to_bytes(1, byteorder='big', signed=False)
-		return result
-
-	@staticmethod
 	def _append_event(result, x, y, t, value, polarity):
-		result += x.to_bytes(4, byteorder='big', signed=False)
-		result += y.to_bytes(4, byteorder='big', signed=False)
-		result += t.to_bytes(4, byteorder='big', signed=False)
-		result += value.to_bytes(1, byteorder='big', signed=False)
-		result += polarity.to_bytes(1, byteorder='big', signed=False)
+		result += to_bytes(x, 4)
+		result += to_bytes(y, 4)
+		result += to_bytes(t, 4)
+		result += to_bytes(value, 1)
+		result += to_bytes(polarity, 1)
 
 	@staticmethod
-	def _decode_first_frame(data, res) -> np.ndarray:
-		result = np.zeros(res, dtype='uint8')
-		for index, _ in np.ndenumerate(result):
-			result[index] = next(data)
-		return result
+	def header(frame_num, first_frame):
+		res = first_frame.shape
+		yield struct.pack('>3I', res[0], res[1], frame_num)
+		yield first_frame.tobytes()
 
 
 @codec(name="aer_lossy")
@@ -129,25 +109,17 @@ class AERLossy:
 	which case a new event with value of this sum is created at the current
 	timestamp.
 	"""
-
-	event_size = 14
-	buffer = bytearray(event_size)
-
 	@classmethod
 	def encoder(cls, frames, threshold=5) -> bytearray:
 		"""
-        Yield binary representation of events from sequence of video frames
-        for single frame at a time.
-        """
+		Yield binary representation of events from sequence of video frames
+		for single frame at a time.
+		"""
 		frame_it = iter(frames)
 		prev = next(frame_it).copy()
 		#ignored_sums = np.zeros(prev.shape, dtype='int16')
 
-		#Encode resolution and number of frames
-		yield struct.pack('>3I', prev.shape[0], prev.shape[1], len(frames))
-
-		#Encode first frame
-		yield prev.tobytes()
+		yield from AER.header(len(frames), prev)
 
 		for t, frame in enumerate(frame_it):
 			diff = np.subtract(frame, prev, dtype='int16')
@@ -162,8 +134,8 @@ class AERLossy:
 					#else:
 					continue
 
-				polarity = 0 if value < 0 else 1
-				cls._append_event(result, i, j, t, abs(value), polarity)
+				polarity = get_polarity(value)
+				AER._append_event(result, i, j, t, abs(value), polarity)
 
 			to_update = abs(diff) > threshold
 			prev[to_update] = frame[to_update]
@@ -172,55 +144,4 @@ class AERLossy:
 
 	@classmethod
 	def decoder(cls, data) -> np.ndarray:
-		data_it = iter(data)
-
-		header = struct.unpack('>3I', cls.take_next(data_it, 12))
-		res = (header[0], header[1])
-		frame_num = header[2]
-
-		frame = cls._decode_first_frame(data_it, res)
-		yield frame
-
-		t = 0
-		prev_t = 0
-		while True:
-			try:
-				buffer = cls.take_next(data_it, 14)
-			except:
-				break
-
-			i, j, t, value, polarity = struct.unpack('>3I2B', buffer)
-
-			if t > prev_t:
-				for _ in range(t - prev_t):
-					yield frame
-				prev_t = t
-
-			value = value if polarity == 1 else -value
-			frame[i, j] += value
-		yield frame
-
-		for i in range(frame_num - t - 2):
-			yield frame
-
-	@staticmethod
-	def take_next(it, n):
-		result = bytearray()
-		for _ in range(n):
-			result += next(it).to_bytes(1, byteorder='big', signed=False)
-		return result
-
-	@staticmethod
-	def _append_event(result, x, y, t, value, polarity):
-		result += x.to_bytes(4, byteorder='big', signed=False)
-		result += y.to_bytes(4, byteorder='big', signed=False)
-		result += t.to_bytes(4, byteorder='big', signed=False)
-		result += value.to_bytes(1, byteorder='big', signed=False)
-		result += polarity.to_bytes(1, byteorder='big', signed=False)
-
-	@staticmethod
-	def _decode_first_frame(data, res) -> np.ndarray:
-		result = np.zeros(res, dtype='uint8')
-		for index, _ in np.ndenumerate(result):
-			result[index] = next(data)
-		return result
+		yield from AER.decoder(data)
