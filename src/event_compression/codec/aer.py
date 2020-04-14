@@ -42,7 +42,7 @@ class AER:
 					continue
 
 				polarity = get_polarity(value)
-				cls._append_event(result, i, j, t, abs(value), polarity)
+				cls.append_event(result, i, j, t, abs(value), polarity)
 
 			prev = frame.copy()
 			if len(result) != 0:
@@ -82,7 +82,7 @@ class AER:
 			yield frame
 
 	@staticmethod
-	def _append_event(result, x, y, t, value, polarity):
+	def append_event(result, x, y, t, value, polarity):
 		result += to_bytes(x, 4)
 		result += to_bytes(y, 4)
 		result += to_bytes(t, 4)
@@ -105,9 +105,6 @@ class AERLossy:
 			i (4 bytes), j (4 bytes), t (float), value (1 byte), polarity (1 byte)
 
 	Events with value smaller or equal to the threshold are ignored.
-	Consecutive ignored values are accumulated, until their sum is > threshold, in
-	which case a new event with value of this sum is created at the current
-	timestamp.
 	"""
 	@classmethod
 	def encoder(cls, frames, threshold=5) -> bytearray:
@@ -117,7 +114,6 @@ class AERLossy:
 		"""
 		frame_it = iter(frames)
 		prev = next(frame_it).copy()
-		#ignored_sums = np.zeros(prev.shape, dtype='int16')
 
 		yield from AER.header(len(frames), prev)
 
@@ -127,15 +123,55 @@ class AERLossy:
 			for (i, j), value in np.ndenumerate(diff):
 				value = int(value)
 				if abs(value) <= threshold:
-					#ignored_sums[i,j] += value
-					#if abs(ignored_sums[i,j]) > threshold:
-					#value = int(ignored_sums[i,j])
-					#ignored_sums[i,j] = 0
-					#else:
 					continue
 
 				polarity = get_polarity(value)
-				AER._append_event(result, i, j, t, abs(value), polarity)
+				AER.append_event(result, i, j, t, abs(value), polarity)
+
+			to_update = abs(diff) > threshold
+			prev[to_update] = frame[to_update]
+			if len(result) != 0:
+				yield result
+
+	@classmethod
+	def decoder(cls, data) -> np.ndarray:
+		yield from AER.decoder(data)
+
+
+@codec(name="aer_lossy_accumulated")
+class AERLossyAccumulated:
+	"""
+	Same as AER format, but lossy.
+
+	AER format represents each event as:
+			i (4 bytes), j (4 bytes), t (float), value (1 byte), polarity (1 byte)
+
+	Events with value smaller or equal to the threshold are ignored.
+	Consecutive ignored values are accumulated, until their sum is > threshold, in
+	which case a new event with value of this sum is created at the current
+	timestamp.
+	"""
+	@classmethod
+	def encoder(cls, frames, threshold=50) -> bytearray:
+		"""
+		Yield binary representation of events from sequence of video frames
+		for single frame at a time.
+		"""
+		frame_it = iter(frames)
+		prev = next(frame_it).copy()
+		accumulated = np.zeros(prev.shape, dtype='int16')
+
+		yield from AER.header(len(frames), prev)
+
+		for t, frame in enumerate(frame_it):
+			diff = np.subtract(frame, prev, dtype='int16')
+			result = bytearray()
+			for (i, j), value in np.ndenumerate(diff):
+				accumulated[i, j] += value
+				if abs(accumulated[i, j]) > threshold:
+					polarity = get_polarity(accumulated[i, j])
+					AER.append_event(result, i, j, t, abs(accumulated[i, j]), polarity)
+					accumulated[i, j] = 0
 
 			to_update = abs(diff) > threshold
 			prev[to_update] = frame[to_update]

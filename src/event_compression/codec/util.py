@@ -58,6 +58,22 @@ def save_event_frame(diff, t, out):
 					out.write(int(2).to_bytes(1, byteorder='big', signed=False))
 
 
+def events_from_frames(frames):
+	"""
+	Generate events one-by-one from frames.
+	"""
+	frame_it = iter(frames)
+	prev = next(frame_it).copy()
+
+	for t, frame in enumerate(frame_it):
+		diff = np.subtract(frame, prev, dtype='int16')
+		for (i, j), value in np.ndenumerate(diff):
+			value = int(value)
+			if value != 0:
+				yield (t, i, j, value)
+		prev = frame.copy()
+
+
 def get_events_by_position(frames, frame_num=None):
 	"""
 	Collect events from frames, grouped by their coordinates.
