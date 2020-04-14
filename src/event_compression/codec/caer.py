@@ -6,26 +6,6 @@ import functools
 import itertools
 
 
-def add_compact_frame(diff, t, arranged):
-	for i, row in enumerate(diff):
-		for j, value in enumerate(row):
-			if value != 0:
-				arranged[i][j].append(t)
-				if value >= 0:
-					arranged[i][j].append(1)
-				else:
-					arranged[i][j].append(2)
-
-
-def save_compact_frames(arranged, out):
-	for row in arranged:
-		for x in row:
-			for i in range(0, len(x), 2):
-				out.write(x[i].to_bytes(4, byteorder='little', signed=False))
-				out.write(x[i + 1].to_bytes(1, byteorder='big', signed=False))
-			out.write(int(0).to_bytes(1, byteorder='big', signed=False))
-
-
 @codec(name="caer")
 class CAER:
 	"""
