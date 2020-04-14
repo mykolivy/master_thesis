@@ -116,44 +116,6 @@ class AER:
 		return result
 
 
-@codec(name="aer_binary")
-class AERBinary:
-	"""
-	Define encoder and decoder for binary AER format.
-	
-	Binary AER format represents each event as:
-			i (4 bytes), j (4 bytes), t (4 bytes), polarity (1 byte)
-	
-	Polarity signifies the sign of change: 
-			255 -- positive change,
-			0 -- negative change.
-	"""
-	@classmethod
-	def decoder(cls, frames):
-		prev = frames.start_frame
-
-		for t, frame in enumerate(frames):
-			diff = np.subtract(frame, prev)
-			result = bytearray()
-			for i, row in enumerate(diff):
-				for j, value in enumerate(row):
-					if value == 0:
-						continue
-					result += i.to_bytes(4, byteorder='big', signed=False)
-					result += j.to_bytes(4, byteorder='big', signed=False)
-					result += t.to_bytes(4, byteorder='little', signed=False)
-					if value >= 0:
-						result += int(255).to_bytes(1, byteorder='big', signed=False)
-					else:
-						result += int(0).to_bytes(1, byteorder='big', signed=False)
-			prev = frame
-			yield result
-
-	@classmethod
-	def encoder(cls, events):
-		pass
-
-
 @codec(name="aer_lossy")
 class AERLossy:
 	"""
