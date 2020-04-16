@@ -54,6 +54,54 @@ def common_test(cls=None):
 	return decorate
 
 
+def value_range_test(range=(0, 256)):
+	"""
+	Test range of values in the sequence.
+
+	# Arguments
+		range: range of values that all the values in the sequence have to lie in.
+			range[0] -- inclusive beginning of range.
+			range[1] -- exclusive end of range.
+	"""
+	def decorate(cls):
+		def test_value_range(instance, seq_conf):
+			seq_conf.range = range
+			for frame in cls(seq_conf):
+				for _, value in np.ndenumerate(frame):
+					assert range[0] <= value and value < range[1]
+
+		cls.test_value_range = test_value_range
+
+	return decorate
+
+
+def change_rate_test(rate=0.1):
+	"""
+	Test rate of change of a sequence.
+	
+	# Arguments
+		rate: 0 <= int <= 1, Target rate of change of pixel values.
+	"""
+	def decorate(cls):
+		def test_integer_rate(instance, seq_conf):
+			for _ in range(1):
+				pass
+			res = 16 / rate
+			seq_conf.rate = rate
+			seq_conf.res = (rate * factor, rate * factor)
+			frames = [x.copy() for x in cls(seq_conf)]
+
+			prev = frames[0]
+			for frame in frames[1:]:
+				diff = np.subtract(frame, prev)
+				assert len(diff > 0) == target_changed_num
+				prev = frame.copy()
+
+		cls.test_integer_rate = test_integer_rate
+
+	return decorate
+
+
 def test_sequence_collection():
 	assert synthetic.sequences()
 

@@ -7,14 +7,14 @@ import os
 import subprocess
 import shutil
 import random
-import event_compression.codec.aer as aer
-import event_compression.codec.caer as caer
+import src.event_compression.codec.aer as aer
+import src.event_compression.codec.caer as caer
 from . import sequence as seq
 import argparse
-import event_compression.codec.util.io as io
+import src.event_compression.codec.util as util
 import tempfile
 from pathlib import Path
-from event_compression.codec import codecs
+from src.event_compression.codec import codecs
 from . import sequences
 
 formats = codecs()
@@ -69,13 +69,13 @@ frame_iterator = sequences[args.sequence](sequence_config)
 
 os.makedirs(os.path.dirname(args.out), exist_ok=True)
 with open(args.out, "wb+") as out:
-	io.create_raw_file(out, args.res, args.fps, args.duration)
+	util.create_raw_file(out, args.res, args.fps, args.duration)
 	if args.format == 'raw':
 		with tempfile.TemporaryDirectory() as tmpdirname:
 			tmpdir = Path(tmpdirname)
 
 			for i, frame in enumerate(frame_iterator):
-				io.save_frame(out, frame)
+				util.save_frame(out, frame)
 				Image.fromarray(np.uint8(frame)).save(f'{tmpdirname}/img_{i}.pgm')
 			os.system(
 			    f"ffmpeg -f image2 -framerate 30 -i {tmpdirname}/img_%d.pgm -c:v libx264 -preset veryslow -crf 0 -pix_fmt gray {args.out}"

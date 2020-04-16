@@ -77,8 +77,9 @@ class MovingEdge:
 
 @video_sequence(name="random_pixel")
 class RandomPixel:
-	"""Produces consequent frames of random pixel seuquence with each
-    iteration"""
+	"""
+	Produces consequent frames of random pixel sequence with each iteration.
+	"""
 	def __init__(self, config):
 		self.conf = config
 
@@ -97,7 +98,7 @@ class RandomPixel:
 
 @video_sequence(name="checkers")
 class Checkers:
-	"""Produces consequent frames of checkerboard pattern with each iteration"""
+	"""Produces consequent frames of checkerboard pattern with each iteration."""
 	def __init__(self, config):
 		self.conf = config
 		self.even = self.frame(even=True)
