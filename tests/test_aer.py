@@ -1,9 +1,9 @@
 import pytest
-import src.event_compression.synthetic as synthetic
-from src.event_compression.synthetic.sequence import *
-import src.event_compression.codec as codec
-from src.event_compression.codec import aer as aer
-from src.event_compression.codec.util import events_from_frames
+import event_compression.synthetic as synthetic
+from event_compression.synthetic.sequence import *
+import event_compression.codec as codec
+from event_compression.codec import aer as aer
+from event_compression.codec.util import events_from_frames
 import itertools
 import functools
 import numpy as np

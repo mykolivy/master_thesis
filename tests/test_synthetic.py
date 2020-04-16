@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 import pdb
-import src.event_compression.synthetic.sequence as sequence
-import src.event_compression.synthetic as synthetic
+import event_compression.synthetic.sequence as sequence
+import event_compression.synthetic as synthetic
 
 
 @pytest.fixture
