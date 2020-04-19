@@ -1,10 +1,10 @@
 import pytest
 import numpy as np
-import pdb
 import event_compression.synthetic.sequence as sequence
 import event_compression.synthetic as synthetic
 from copy import deepcopy
-from decimal import *
+from decimal import Decimal
+import event_compression.analysis.event as analysis
 
 
 @pytest.fixture
@@ -177,86 +177,22 @@ class TestRandomBinaryChange:
 
 @common_test(cls=sequence.RandomChange)
 class TestRandomChange:
-	def test_average_rate_change(self, seq_conf):
-		comp_load = 10**0
-		rate = 0.4235
-		seq_conf.rate = rate
-
-		seq = self.cls(seq_conf)
-		frame_num = len(seq)
-		pixel_num = seq_conf.res[0] * seq_conf.res[1]
-
-		avg = Decimal(0)
-		iter_num = int(comp_load / frame_num / pixel_num) + 1
-		for _ in range(iter_num):
-			seq = self.cls(seq_conf)
-			it = iter(seq)
-
-			prev = next(it)
-			for i, frame in enumerate(it):
-				diff = np.subtract(frame, prev)
-				avg += Decimal(np.count_nonzero(diff))
-				prev = frame.copy()
-
-		avg = avg / Decimal(iter_num * frame_num * pixel_num)
-
-		assert rate == pytest.approx(avg, 0.1)
+	pass
 
 
 @value_range_test()
 @common_test(cls=sequence.RandomChanceChange)
 class TestRandomChanceChange:
-	def test_average_rate_change(self, seq_conf):
-		comp_load = 10**0
-		rate = 0.4235
-		seq_conf.rate = rate
-
-		seq = self.cls(seq_conf)
-		frame_num = len(seq)
-		pixel_num = seq_conf.res[0] * seq_conf.res[1]
-
-		avg = Decimal(0)
-		iter_num = int(comp_load / frame_num / pixel_num) + 1
-		for _ in range(iter_num):
-			seq = self.cls(seq_conf)
-			it = iter(seq)
-
-			prev = next(it).copy()
-			for i, frame in enumerate(it):
-				diff = np.subtract(frame, prev)
-				avg += Decimal(np.count_nonzero(diff))
-				prev = frame.copy()
-
-		avg = avg / Decimal(iter_num * frame_num * pixel_num)
-
-		assert rate == pytest.approx(avg, 0.1)
+	pass
 
 
 @common_test(cls=sequence.RandomAdaptiveChange)
 class TestRandomAdaptiveChange:
 	def test_average_rate_change(self, seq_conf):
-		comp_load = 10**0
-		rate = 0.4235
-		seq_conf.rate = rate
-		seq_conf.res = (3, 3)
-		seq_conf.frame_num = 3
+		target_rate = 0.42359
+		seq_conf = sequence.Config((32, 32), 4, 1, rate=target_rate)
 
 		seq = self.cls(seq_conf)
-		frame_num = len(seq)
-		pixel_num = seq_conf.res[0] * seq_conf.res[1]
+		rate = analysis.event_rate(seq)
 
-		avg = Decimal(0)
-		iter_num = int(comp_load / frame_num / pixel_num) + 1
-		for _ in range(iter_num):
-			seq = self.cls(seq_conf)
-			it = iter(seq)
-
-			prev = next(it).copy()
-			for i, frame in enumerate(it):
-				diff = np.subtract(frame, prev)
-				avg += Decimal(np.count_nonzero(diff))
-				prev = frame.copy()
-
-		avg = avg / Decimal(iter_num * frame_num * pixel_num)
-
-		assert rate == pytest.approx(avg, 0.1)
+		assert target_rate == pytest.approx(rate, 0.001)

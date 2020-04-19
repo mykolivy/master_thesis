@@ -253,37 +253,60 @@ class RandomAdaptiveChange:
 		self.res_sq = self.conf.res[0] * self.conf.res[1]
 		self.seed = get_seed()
 		self.changable_num = int(self.res_sq * self.conf.rate)
+		self.dist, self.rate = self.get_change_dist()
+		self.range_width = self.conf.range[1] - self.conf.range[0]
 
 	def __iter__(self):
 		random.seed(self.seed)
 
-		total_changed = 0
-		adapt = 0
 		frame = self.first_frame.copy()
-		for i in range(self.conf.frame_num):
-			num = self.changable_num + adapt
-			population = range(0, self.res_sq)
-			self.set_from_events(frame, random.sample(population, num))
+		yield frame
 
-			total_changed += num
-			adapt = self.get_adaptation_num(i + 1, total_changed)
-
+		for change in self.dist:
+			population = range(self.res_sq)
+			self.set_from_events(frame, random.sample(population, change))
 			yield frame
+
+	def get_change_dist(self):
+		frame_num = len(self)
+		target = self.conf.rate
+
+		total = (frame_num - 1) * self.res_sq
+
+		change = round(target * total / (frame_num - 1))
+		dist = np.full(frame_num - 1, change)
+		total_changed = change * (frame_num - 1)
+
+		rate = total_changed / total
+
+		to_change = round(target * total - total_changed)
+		if abs(to_change) >= 1:
+			self.distribute(dist, to_change)
+			rate = np.sum(dist) / total
+			total_changed += to_change
+		to_change = round(target * total - total_changed)
+
+		return dist, rate
 
 	def set_from_events(self, frame, events):
 		for event in events:
 			i = int(event / self.conf.res[1])
 			j = event - i * self.conf.res[1]
-			frame[i][j] = random.randrange(self.conf.range[0], self.conf.range[1])
+
+			new_val = self.change(frame[i, j])
+			assert new_val != frame[i, j]
+			frame[i, j] = new_val
 
 	def __len__(self):
 		return self.conf.frame_num
 
-	def compute_current_rate(self, total_changed):
-		return total_changed / (self.res_sq * self.conf.frame_num)
+	def distribute(self, dist, value):
+		mod = 1 if value > 0 else -1
+		for i in range(abs(value)):
+			i = i % len(dist)
+			dist[i] += mod
+		np.random.shuffle(dist)
 
-	def get_adaptation_num(self, i, total_changed):
-		adapt = round(self.conf.rate * self.res_sq * i) - total_changed
-		if adapt < 0:
-			return 0
-		return adapt
+	def change(self, val):
+		mod = random.randrange(self.conf.range[0] + 1, self.conf.range[1])
+		return (val + mod) % self.range_width + self.conf.range[0]
