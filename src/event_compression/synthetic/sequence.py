@@ -286,4 +286,4 @@ class RandomAdaptiveChange:
 		adapt = round(self.conf.rate * self.res_sq * i) - total_changed
 		if adapt < 0:
 			return 0
-		return adapt * 2
+		return adapt
