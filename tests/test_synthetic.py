@@ -9,12 +9,7 @@ import event_compression.analysis.event as analysis
 
 @pytest.fixture
 def seq_conf():
-	return sequence.Config((128, 128),
-	                       30,
-	                       1,
-	                       value=255,
-	                       rate=0.1,
-	                       val_range=(0, 255))
+	return sequence.Config((3, 3), 4, 1, value=255, rate=0.5, val_range=(0, 255))
 
 
 def common_test(cls=None):
@@ -189,8 +184,8 @@ class TestRandomChanceChange:
 @common_test(cls=sequence.RandomAdaptiveChange)
 class TestRandomAdaptiveChange:
 	def test_average_rate_change(self, seq_conf):
-		target_rate = 0.42359
-		seq_conf = sequence.Config((32, 32), 4, 1, rate=target_rate)
+		target_rate = 0.4235971
+		seq_conf = sequence.Config((32, 32), 500, 1, rate=target_rate)
 
 		seq = self.cls(seq_conf)
 		rate = analysis.event_rate(seq)
