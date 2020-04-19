@@ -146,29 +146,31 @@ class RandomBinaryChange:
     values. Number of such pixels depends on event rate specified"""
 	def __init__(self, config):
 		self.conf = config
-		self.frame = np.zeros(self.conf.res, dtype=self.conf.dtype)
+		self.first_frame = np.zeros(self.conf.res, dtype=self.conf.dtype)
 		self.res_sq = self.conf.width * self.conf.height
 		self.seed = get_seed()
 
 	def __iter__(self):
 		random.seed(self.seed)
-		for _ in range(self.conf.frame_num):
-			self.change_rand()
-			yield self.frame
 
-	def change_rand(self):
+		frame = self.first_frame.copy()
+		for _ in range(self.conf.frame_num):
+			self.change_rand(frame)
+			yield frame
+
+	def change_rand(self, frame):
 		num = int(self.res_sq * self.conf.rate)
 		population = range(0, self.res_sq)
-		self.set_from_events(random.sample(population, num))
+		self.set_from_events(frame, random.sample(population, num))
 
-	def set_from_events(self, events):
+	def set_from_events(self, frame, events):
 		for event in events:
 			i = int(event / self.conf.width)
 			j = event - i * self.conf.width
-			if self.frame[i, j] == 0:
-				self.frame[i, j] = 255
+			if frame[i, j] == 0:
+				frame[i, j] = 255
 			else:
-				self.frame[i, j] = 0
+				frame[i, j] = 0
 
 	def __len__(self):
 		return self.conf.frame_num
