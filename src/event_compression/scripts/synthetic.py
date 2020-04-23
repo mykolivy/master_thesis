@@ -55,4 +55,5 @@ def get_frame_iterator(args):
 	return seqs[args.sequence](sequence_config)
 
 
-main()
+if __name__ == "__main__":
+	main()
