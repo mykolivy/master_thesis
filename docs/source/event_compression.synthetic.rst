@@ -12,4 +12,4 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   Synthetic Tests <event_compression.synthetic.sequence>
+   Synthetic Tests <event_compression.sequence.synthetic>

@@ -1,6 +1,7 @@
 import pytest
-import event_compression.synthetic as synthetic
-from event_compression.synthetic.sequence import *
+import event_compression.sequence as sequence
+from event_compression.sequence import sequences
+from event_compression.sequence.synthetic import *
 import event_compression.codec as codec
 from event_compression.codec import aer as aer
 from event_compression.codec.util import events_from_frames
@@ -54,7 +55,7 @@ def invertability_test(cls=None, threshold=0):
 					assert abs(int(value) - int(correct[t][index])) <= threshold
 
 		#Add all invertability tests
-		for name, sequence in synthetic.sequences().items():
+		for name, sequence in sequences().items():
 			config = Config((64, 64), 10, 3, value=127, rate=0.2)
 			np.random.seed(seed=0)
 			correct_seq = [x.copy() for x in sequence(config)]

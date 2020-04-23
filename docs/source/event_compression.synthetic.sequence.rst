@@ -1,7 +1,7 @@
-event\_compression.synthetic.sequence module
+event\_compression.sequence.synthetic module
 ============================================
 
-.. automodule:: event_compression.synthetic.sequence
+.. automodule:: event_compression.sequence.synthetic
    :members:
    :undoc-members:
    :show-inheritance:

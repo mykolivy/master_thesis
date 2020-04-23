@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-import event_compression.synthetic.sequence as sequence
-import event_compression.synthetic as synthetic
+import event_compression.sequence as sequence
+import event_compression.sequence.synthetic as synthetic
 from copy import deepcopy
 from decimal import Decimal
 import event_compression.analysis.event as analysis
@@ -9,7 +9,7 @@ import event_compression.analysis.event as analysis
 
 @pytest.fixture
 def seq_conf():
-	return sequence.Config((3, 3), 4, 1, value=255, rate=0.5, val_range=(0, 255))
+	return synthetic.Config((3, 3), 4, 1, value=255, rate=0.5, val_range=(0, 255))
 
 
 def common_test(cls=None):
@@ -132,60 +132,60 @@ def change_rate_test():
 
 
 def test_sequence_collection():
-	assert synthetic.sequences()
+	assert sequence.sequences()
 
 
-@common_test(cls=sequence.SingleColor)
+@common_test(cls=synthetic.SingleColor)
 class TestSingleColor:
 	def test_value_of_all_frames(self, seq_conf):
-		seq = sequence.SingleColor(seq_conf)
+		seq = synthetic.SingleColor(seq_conf)
 		correct_frame = np.full(seq_conf.res, seq_conf.value, dtype=seq_conf.dtype)
 		for i, frame in enumerate(seq):
 			print(i)
 			np.testing.assert_equal(frame, correct_frame)
 
 
-@common_test(cls=sequence.MovingEdge)
+@common_test(cls=synthetic.MovingEdge)
 class TestMovingEdge:
 	def test_first_frame_blank(self, seq_conf):
-		seq = sequence.MovingEdge(seq_conf)
+		seq = synthetic.MovingEdge(seq_conf)
 		correct_frame = np.zeros(seq_conf.res)
 		for frame in seq:
 			np.testing.assert_equal(frame, correct_frame)
 			break
 
 
-@common_test(cls=sequence.RandomPixel)
+@common_test(cls=synthetic.RandomPixel)
 class TestRandomPixel:
 	pass
 
 
-@common_test(cls=sequence.Checkers)
+@common_test(cls=synthetic.Checkers)
 class TestCheckers:
 	pass
 
 
-@common_test(cls=sequence.RandomBinaryChange)
+@common_test(cls=synthetic.RandomBinaryChange)
 class TestRandomBinaryChange:
 	pass
 
 
-@common_test(cls=sequence.RandomChange)
+@common_test(cls=synthetic.RandomChange)
 class TestRandomChange:
 	pass
 
 
 @value_range_test()
-@common_test(cls=sequence.RandomChanceChange)
+@common_test(cls=synthetic.RandomChanceChange)
 class TestRandomChanceChange:
 	pass
 
 
-@common_test(cls=sequence.RandomAdaptiveChange)
+@common_test(cls=synthetic.RandomAdaptiveChange)
 class TestRandomAdaptiveChange:
 	def test_average_rate_change(self, seq_conf):
 		target_rate = 0.4235971
-		seq_conf = sequence.Config((32, 32), 500, 1, rate=target_rate)
+		seq_conf = synthetic.Config((32, 32), 500, 1, rate=target_rate)
 
 		seq = self.cls(seq_conf)
 		rate = analysis.event_rate(seq)
