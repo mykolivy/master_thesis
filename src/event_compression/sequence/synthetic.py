@@ -140,118 +140,24 @@ class Checkers:
 		return self.conf.frame_num
 
 
-@video_sequence(name="random_binary_change")
-class RandomBinaryChange:
-	"""Produces consequent frames where number of pixel flip their
-    values. Number of such pixels depends on event rate specified"""
-	def __init__(self, config):
-		self.conf = config
-		self.first_frame = np.zeros(self.conf.res, dtype=self.conf.dtype)
-		self.res_sq = self.conf.width * self.conf.height
-		self.seed = get_seed()
-
-	def __iter__(self):
-		random.seed(self.seed)
-
-		frame = self.first_frame.copy()
-		for _ in range(self.conf.frame_num):
-			self.change_rand(frame)
-			yield frame
-
-	def change_rand(self, frame):
-		num = int(self.res_sq * self.conf.rate)
-		population = range(0, self.res_sq)
-		self.set_from_events(frame, random.sample(population, num))
-
-	def set_from_events(self, frame, events):
-		for event in events:
-			i = int(event / self.conf.width)
-			j = event - i * self.conf.width
-			if frame[i, j] == 0:
-				frame[i, j] = 255
-			else:
-				frame[i, j] = 0
-
-	def __len__(self):
-		return self.conf.frame_num
-
-
 @video_sequence(name="random_change")
 class RandomChange:
-	"""Produces consequent frames of frames where number of pixel flip their
-    values. Number of such pixels approximates event rate specified"""
+	"""
+	Sequence of frames, where ``config.rate`` fraction of the pixels change.
+
+	.. warning::
+		Given limited resolution and number of frames, it is not possible to 
+		produce a sequence with exact change rate.
+
+		Random change produces sequence with rate which is **approximate** 
+		(as close as possible) to the given ``conf.rate``.
+
+	Arguments:
+		:config: Sequence configuration.
+	"""
 	def __init__(self, config):
 		self.conf = config
-		self.res_sq = self.conf.width * self.conf.height
-		self.seed = get_seed()
-		self.first_frame = self.compute_first_frame()
-
-	def __iter__(self):
-		random.seed(self.seed)
-		frame = self.first_frame.copy()
-		for _ in range(self.conf.frame_num):
-			num = int(self.res_sq * self.conf.rate)
-			population = range(0, self.res_sq)
-			self.set_from_events(frame, random.sample(population, num))
-			yield frame
-
-	def set_from_events(self, frame, events):
-		for event in events:
-			i = int(event / self.conf.width)
-			j = event - i * self.conf.width
-			frame[i][j] = random.randrange(self.conf.range[0], self.conf.range[1])
-
-	def __len__(self):
-		return self.conf.frame_num
-
-	def compute_first_frame(self):
-		frame = np.empty(self.conf.res, dtype=self.conf.dtype)
-		for index, _ in np.ndenumerate(frame):
-			frame[index] = random.randrange(self.conf.range[0], self.conf.range[1])
-		return frame
-
-
-@video_sequence(name="random_chance_change")
-class RandomChanceChange:
-	"""Produces sequence of frames. In each frame each pixel has rate % chance
-       to change their value in next frame"""
-	def __init__(self, config):
-		self.conf = config
-		self.seed = get_seed()
-
-		self.first_frame = self.compute_first_frame()
-
-	def __iter__(self):
-		random.seed(self.seed)
-
-		frame = self.first_frame.copy()
-		for _ in range(self.conf.frame_num):
-			frame = self.change(frame)
-			yield frame
-
-	def __len__(self):
-		return self.conf.frame_num
-
-	def change(self, frame):
-		for index, _ in np.ndenumerate(frame):
-			if random.random() <= self.conf.rate:
-				frame[index] = random.randrange(self.conf.range[0], self.conf.range[1])
-		return frame
-
-	def compute_first_frame(self):
-		frame = np.empty(self.conf.res, dtype=self.conf.dtype)
-		for index, _ in np.ndenumerate(frame):
-			frame[index] = random.randrange(self.conf.range[0], self.conf.range[1])
-		return frame
-
-
-@video_sequence(name="random_adaptive_change")
-class RandomAdaptiveChange:
-	"""Produces consequent frames of frames where number of pixel flip their
-    values. Number of such pixels approximates event rate specified"""
-	def __init__(self, config):
-		self.conf = config
-		self.first_frame = np.zeros(self.conf.res, dtype=self.conf.dtype)
+		self.first_frame = self.init_first_frame()
 		self.res_sq = self.conf.res[0] * self.conf.res[1]
 		self.seed = get_seed()
 		self.changable_num = int(self.res_sq * self.conf.rate)
@@ -279,14 +185,14 @@ class RandomAdaptiveChange:
 		dist = np.full(frame_num - 1, change)
 		total_changed = change * (frame_num - 1)
 
-		rate = total_changed / total
-
 		to_change = round(target * total - total_changed)
 		if abs(to_change) >= 1:
 			self.distribute(dist, to_change)
-			rate = np.sum(dist) / total
+
 			total_changed += to_change
-		to_change = round(target * total - total_changed)
+		assert round(target * total - total_changed) < 1
+
+		rate = np.sum(dist) / total
 
 		return dist, rate
 
@@ -307,8 +213,15 @@ class RandomAdaptiveChange:
 		for i in range(abs(value)):
 			i = i % len(dist)
 			dist[i] += mod
+			assert dist[i] <= self.res_sq
 		np.random.shuffle(dist)
 
 	def change(self, val):
 		mod = random.randrange(self.conf.range[0] + 1, self.conf.range[1])
 		return (val + mod) % self.range_width + self.conf.range[0]
+
+	def init_first_frame(self):
+		result = np.empty(self.conf.res, dtype=self.conf.dtype)
+		for (i, j), _ in np.ndenumerate(result):
+			result[i, j] = random.randrange(self.conf.range[0], self.conf.range[1])
+		return result

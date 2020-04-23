@@ -72,7 +72,7 @@ def value_range_test():
 			range[1] -- exclusive end of range.
 	"""
 	def decorate(cls):
-		ranges = [(0, 256), (1, 3)]
+		ranges = [(0, 256), (0, 2), (1, 3)]
 
 		def f(cls, range, seq_conf):
 			seq_conf.range = range
@@ -88,43 +88,6 @@ def value_range_test():
 
 			setattr(cls, f'test_value_range_{range[0]}_{range[1]}',
 			        caller(cls, range))
-
-		return cls
-
-	return decorate
-
-
-def change_rate_test():
-	"""
-	Test rate of change of a sequence.
-	
-	# Arguments
-		rate: 0 <= int <= 1, Target rate of change of pixel values.
-	"""
-	def decorate(cls):
-		rates = [0., 1., 0.5, 0.1, 0.7]
-
-		def f(cls, rate, seq_conf):
-			seq_conf.rate = rate
-			res = rate * 100
-			res = 32 if res == 0 else res
-			seq_conf.res = (res, res)
-			frames = [x.copy() for x in cls.cls(seq_conf)]
-
-			prev = frames[0]
-			res = prev.shape[0]
-			target_changed_num = rate * res * res
-			for frame in frames[1:]:
-				diff = np.subtract(frame, prev)
-				assert np.count_nonzero(diff) == target_changed_num
-				prev = frame.copy()
-
-		for rate in rates:
-
-			def caller(cls, rate):
-				return lambda instance, seq_conf: f(cls, rate, seq_conf)
-
-			setattr(cls, f'test_rate_change_{rate}', caller(cls, rate))
 
 		return cls
 
@@ -165,29 +128,55 @@ class TestCheckers:
 	pass
 
 
-@common_test(cls=synthetic.RandomBinaryChange)
-class TestRandomBinaryChange:
-	pass
-
-
+@value_range_test()
 @common_test(cls=synthetic.RandomChange)
 class TestRandomChange:
-	pass
+	def test_rates(self, seq_conf):
+		target_rates = [0.4235971, 0.073911]
 
+		for target_rate in target_rates:
+			seq_conf = synthetic.Config((32, 32), 500, 1, rate=target_rate)
 
-@value_range_test()
-@common_test(cls=synthetic.RandomChanceChange)
-class TestRandomChanceChange:
-	pass
+			seq = self.cls(seq_conf)
+			rate = analysis.event_rate(seq)
 
+			assert target_rate == pytest.approx(rate, 0.001)
 
-@common_test(cls=synthetic.RandomAdaptiveChange)
-class TestRandomAdaptiveChange:
-	def test_average_rate_change(self, seq_conf):
-		target_rate = 0.4235971
-		seq_conf = synthetic.Config((32, 32), 500, 1, rate=target_rate)
+	def test_1_rate(self, seq_conf):
+		target_rate = 1.0
+		seq_conf = synthetic.Config((3, 3), 4, 1, rate=target_rate)
 
 		seq = self.cls(seq_conf)
 		rate = analysis.event_rate(seq)
 
-		assert target_rate == pytest.approx(rate, 0.001)
+		assert rate == target_rate
+
+	def test_0_rate(self, seq_conf):
+		target_rate = 0.0
+		seq_conf = synthetic.Config((3, 3), 4, 1, rate=target_rate)
+
+		seq = self.cls(seq_conf)
+		rate = analysis.event_rate(seq)
+
+		assert rate == target_rate
+
+	def test_computed_rate(self, seq_conf):
+		target_rate = 0.4235971
+		res = 30
+		frames = 500
+
+		seq_conf = synthetic.Config((res, res), frames, 1, rate=target_rate)
+
+		seq = self.cls(seq_conf)
+		rate = analysis.event_rate(seq)
+
+		assert seq.rate == rate
+		assert seq.rate != target_rate
+
+	def test_distribution_overflow(self, seq_conf):
+		target_rate = 0.9999999
+
+		seq_conf = synthetic.Config((1, 1), 5, 1, rate=target_rate)
+
+		seq = self.cls(seq_conf)
+		rate = analysis.event_rate(seq)
