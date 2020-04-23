@@ -17,6 +17,7 @@ __pycache__/
 summary.pdf
 docs/build
 **/*.egg-info
+src/event_compression/scripts/bin
 
 .gitmodules
 datasets
