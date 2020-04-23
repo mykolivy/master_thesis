@@ -1,4 +1,3 @@
-import cv2
 import numpy as np
 from . import _REGISTER
 from functools import reduce
@@ -14,22 +13,6 @@ def codec(name=None):
 		return cls
 
 	return decorate
-
-
-class VideoFrameReader:
-	"""
-	Iterate through frames of regular compressed video files as np.ndarray objects
-	"""
-	def __init__(self, video):
-		self.src = video
-		self.frame = None
-
-	def __iter__(self) -> np.ndarray:
-		cap = cv2.VideoCapture(self.src)
-		success, self.frame = cap.read()
-		while success:
-			yield self.frame
-			success, self.frame = cap.read()
 
 
 def create_raw_file(f, resolution, fps, duration):
