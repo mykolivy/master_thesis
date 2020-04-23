@@ -11,3 +11,6 @@ def video_sequence(name=None):
 		return cls
 
 	return decorate
+
+
+from . import synthetic

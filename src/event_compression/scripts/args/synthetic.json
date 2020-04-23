@@ -1,0 +1,101 @@
+{
+	"description": "Perform binary search of event rate performance threshold",
+	"args": [
+		{
+			"args": [
+				"format"
+			],
+			"kwargs": {
+				"help": "Format of the output file.",
+				"choices": "@codecs"
+			}
+		},
+		{
+			"args": [
+				"sequence"
+			],
+			"kwargs": {
+				"help": "Type of sequence to be generated.",
+				"choices": "@sequences"
+			}
+		},
+		{
+			"args": [
+				"-r",
+				"--res"
+			],
+			"kwargs": {
+				"dest": "res",
+				"action": "store",
+				"default": "@[64,64]",
+				"nargs": "@2",
+				"type": "@int",
+				"help": "Resolution of the generated sequence: rows, columns."
+			}
+		},
+		{
+			"args": [
+				"--fps"
+			],
+			"kwargs": {
+				"dest": "fps",
+				"action": "store",
+				"default": "@30",
+				"type": "@int",
+				"help": "Framerate of the generated sequence."
+			}
+		},
+		{
+			"args": [
+				"-d",
+				"--duration"
+			],
+			"kwargs": {
+				"dest": "duration",
+				"action": "store",
+				"default": "@2",
+				"type": "@int",
+				"help": "Duration of the generated sequence."
+			}
+		},
+		{
+			"args": [
+				"--rate"
+			],
+			"kwargs": {
+				"default": "@0.5",
+				"type": "@float",
+				"help": "Rate of pixel change in [0.0, 1.0] range."
+			}
+		},
+		{
+			"args": [
+				"--value"
+			],
+			"kwargs": {
+				"default": "@0",
+				"type": "@int",
+				"help": "Special value for a sequence."
+			}
+		},
+		{
+			"args": [
+				"--range"
+			],
+			"kwargs": {
+				"default": "@[0,256]",
+				"type": "@int",
+				"nargs": "@2",
+				"help": "Range of pixel values in the generated sequence in [a, b) range."
+			}
+		},
+		{
+			"args": [
+				"out"
+			],
+			"kwargs": {
+				"help": "Output file."
+			}
+		}
+	]
+}
