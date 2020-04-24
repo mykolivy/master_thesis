@@ -27,5 +27,5 @@ setup(name='event_compression',
       },
       install_requires=[
           'pytest', 'numpy', 'tensorflow', 'sphinx>=3', 'sphinx-rtd-theme',
-          'Pillow', 'opencv-python'
+          'Pillow', 'opencv-python', 'tabulate'
       ])

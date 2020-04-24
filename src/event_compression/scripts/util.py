@@ -86,3 +86,8 @@ def log_result():
 		return g
 
 	return decorate
+
+
+def log(msg, out, end='\n'):
+	print(msg, end=end, flush=True)
+	out.write(f'{msg}{end}')

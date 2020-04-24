@@ -1,6 +1,8 @@
 import numpy as np
 from . import _REGISTER
 from functools import reduce
+import tempfile
+from os import system
 
 
 def codecs():

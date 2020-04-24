@@ -1,0 +1,91 @@
+{
+	"description": "Perform binary search of event rate performance threshold",
+	"args": [
+		{
+			"args": [
+				"-p",
+				"--precision"
+			],
+			"kwargs": {
+				"dest": "precision",
+				"type": "@float",
+				"default": "@0.0001",
+				"help": "Precision of the entropy coder."
+			}
+		},
+		{
+			"args": [
+				"-e",
+				"--compute_effort"
+			],
+			"kwargs": {
+				"dest": "compute_effort",
+				"type": "@int",
+				"default": "@2**19",
+				"help": "Total number of pixels in each tested sequence. Either dimensions or duration is altered to meet requirements."
+			}
+		},
+		{
+			"args": [
+				"-d",
+				"--durations"
+			],
+			"kwargs": {
+				"dest": "durations",
+				"type": "@int",
+				"default": "@[2**x for x in range(5)]",
+				"nargs": "+",
+				"help": "Durations (total number of frames) of generated ssequences to find event performance threshold on."
+			}
+		},
+		{
+			"args": [
+				"-r",
+				"--resolutions"
+			],
+			"kwargs": {
+				"dest": "resolutions",
+				"type": "@int",
+				"default": "@[2**x for x in range(11)]",
+				"nargs": "+",
+				"help": "Resolutions of generated ssequences to find event performance threshold on."
+			}
+		},
+		{
+			"args": [
+				"-v",
+				"--verbose"
+			],
+			"kwargs": {
+				"dest": "verbose",
+				"action": "store_true",
+				"help": "Wether to include more logging information to the standard output."
+			}
+		},
+		{
+			"args": [
+				"codec"
+			],
+			"kwargs": {
+				"help": "Codec for which to compute the event rate performance threshold, in comparison with the selected entropy coder.",
+				"choices": "@codecs"
+			}
+		},
+		{
+			"args": [
+				"entropy_coder"
+			],
+			"kwargs": {
+				"help": "Relative path to entropy coder binary, which will be used as a baseline for threshold analysis. Example: lpaq1"
+			}
+		},
+		{
+			"args": [
+				"out"
+			],
+			"kwargs": {
+				"help": "Output file."
+			}
+		}
+	]
+}

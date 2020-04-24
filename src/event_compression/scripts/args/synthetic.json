@@ -1,5 +1,5 @@
 {
-	"description": "Perform binary search of event rate performance threshold",
+	"description": "Generate synthetic sequence.",
 	"args": [
 		{
 			"args": [

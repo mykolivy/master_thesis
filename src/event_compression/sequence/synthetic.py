@@ -210,6 +210,7 @@ class RandomChange:
 
 	def distribute(self, dist, value):
 		mod = 1 if value > 0 else -1
+
 		for i in range(abs(value)):
 			i = i % len(dist)
 			dist[i] += mod
