@@ -92,10 +92,9 @@ def get_args():
 	return args
 
 
-def write_args(args, out):
+def print_args(args, out):
 	for key, value in vars(args).items():
-		out.write("{0:<30} {1}\n".format(key + ":", value))
-	out.flush()
+		util.log("{0:<30} {1}".format(key + ":", value), out)
 
 
 def seq_to_bytes(seq):
@@ -119,7 +118,7 @@ def main():
 		exit(1)
 	os.makedirs(os.path.dirname(args.out), exist_ok=True)
 	with open(args.out, 'w+') as out:
-		write_args(args, out)
+		print_args(args, out)
 		results = {
 		    "res": [0.0 for _ in range(len(args.resolutions))],
 		    "dur": [0.0 for _ in range(len(args.durations))]
