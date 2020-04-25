@@ -45,7 +45,7 @@
 			"kwargs": {
 				"dest": "durations",
 				"type": "@int",
-				"default": "@[2**x for x in range(5)]",
+				"default": "@[2**(x+1) for x in range(4)]",
 				"nargs": "+",
 				"help": "Durations (total number of frames) of generated ssequences to find event performance threshold on."
 			}

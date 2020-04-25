@@ -16,13 +16,32 @@ import operator
 import json
 
 
-def seq_provider(res, compute_effort):
+def res_seq_provider(res, compute_effort):
+	res = (res, res)
+
 	def generate_seq(rate):
 		duration = int(math.ceil(compute_effort / (res[0] * res[1])))
 		duration = max(duration, 2)
 		seq_config = Config(res,
 		                    1,
 		                    duration,
+		                    rate=float(rate),
+		                    val_range=(0, 256),
+		                    dtype='uint8')
+		return RandomChange(seq_config)
+
+	return generate_seq
+
+
+def time_seq_provider(time, compute_effort):
+	assert time > 1
+
+	def generate_seq(rate):
+		res = int(math.ceil(math.sqrt(compute_effort / time)))
+		res = max(res, 1)
+		seq_config = Config((res, res),
+		                    1,
+		                    time,
 		                    rate=float(rate),
 		                    val_range=(0, 256),
 		                    dtype='uint8')
@@ -107,58 +126,60 @@ def seq_to_bytes(seq):
 	return result
 
 
+def tabulate_search(points, seq_provider, args, out, header):
+	compute_effort = int(math.ceil(1.0 / args.precision)) * args.compute_effort
+	codec = codecs()[args.codec]()
+	results = [0.0 for _ in range(len(points))]
+
+	util.log("{0:=^49}".format(''), out)
+	util.log("({0:^5}) {1:^20} {2:^20}".format("#", header, "Threshold"), out)
+	util.log("{0:=^49}".format(''), out)
+
+	for i, point in enumerate(points):
+		samples = []
+		for j in range(args.iterations):
+
+			seqs = seq_provider(point, compute_effort)
+			util.log("{0:^27} {1:^10} {2:^10}".format("Rate", "bsize", "size"), out)
+			util.log("{0:-^49}".format(''), out)
+
+			threshold = compute_event_threshold(codec, args.entropy_coder, seqs,
+			                                    args.precision, out)
+			samples.append(threshold)
+
+			util.log("{0:=^49}".format(''), out)
+			util.log("({0:^5}) {1:^20} {2:^20.8f}".format(j + 1, point, threshold),
+			         out)
+			util.log("{0:=^49}".format(''), out)
+
+		results[i] = sum(samples) / args.iterations
+		util.log("{0:*^49}".format(''), out)
+		util.log("{0} {1:^20} {2:^20.8f}".format("average", point, results[i]), out)
+		util.log("{0:*^49}".format(''), out)
+
+	util.log("{0:^49}".format("SUMMARY"), out)
+	util.log("{0:^24} {1:^24}".format(header, "Threshold"), out)
+	util.log("{0:=^49}".format(''), out)
+	for i, point in enumerate(points):
+		util.log("{0:^24} {1:^24.15f}".format(point, results[i]), out)
+	util.log("{0:=^49}".format(''), out)
+
+
 def main():
 	args = get_args()
 
-	codec = codecs()[args.codec]()
-
-	compute_effort = int(math.ceil(1.0 / args.precision)) * args.compute_effort
 	if os.path.isfile(args.out):
 		sys.stderr.write(f"ERROR: file {args.out} already exists! Exiting...")
 		exit(1)
 	os.makedirs(os.path.dirname(args.out), exist_ok=True)
 	with open(args.out, 'w+') as out:
 		print_args(args, out)
-		results = {
-		    "res": [0.0 for _ in range(len(args.resolutions))],
-		    "dur": [0.0 for _ in range(len(args.durations))]
-		}
 
 		util.log("\nProcessing resolutions...", out)
-		util.log("{0:=^49}".format(''), out)
-		util.log("({0:^5}) {1:^20} {2:^20}".format("#", "Resolution", "Threshold"),
-		         out)
-		util.log("{0:=^49}".format(''), out)
-		for i, res in enumerate(args.resolutions):
-			samples = []
-			for j in range(args.iterations):
+		tabulate_search(args.resolutions, res_seq_provider, args, out, "Resolution")
 
-				seqs = seq_provider((res, res), compute_effort)
-				util.log("{0:^27} {1:^10} {2:^10}".format("Rate", "bsize", "size"), out)
-				util.log("{0:-^49}".format(''), out)
-
-				threshold = compute_event_threshold(codec, args.entropy_coder, seqs,
-				                                    args.precision, out)
-				samples.append(threshold)
-
-				util.log("{0:=^49}".format(''), out)
-				util.log("({0:^5}) {1:^20} {2:^20.8f}".format(j + 1, res, threshold),
-				         out)
-				util.log("{0:=^49}".format(''), out)
-
-			results["res"][i] = sum(samples) / args.iterations
-			util.log("{0:*^49}".format(''), out)
-			util.log(
-			    "{0} {1:^20} {2:^20.8f}".format("average", res, results["res"][i]),
-			    out)
-			util.log("{0:*^49}".format(''), out)
-
-		util.log("{0:^49}".format("SUMMARY"), out)
-		util.log("{0:^24} {1:^24}".format("Resolution", "Threshold"), out)
-		util.log("{0:=^49}".format(''), out)
-		for i, res in enumerate(args.resolutions):
-			util.log("{0:^24} {1:^24.15f}".format(res, results["res"][i]), out)
-		util.log("{0:=^49}".format(''), out)
+		util.log("\nProcessing durations...", out)
+		tabulate_search(args.durations, time_seq_provider, args, out, "Duration")
 
 
 if __name__ == "__main__":
