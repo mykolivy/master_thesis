@@ -41,23 +41,35 @@ def main():
 	with open(args.out, 'w+') as out:
 		util.log(f"Parameters used: {args}\n", out)
 		results = {
-		    "res": [0.0 for _ in range(len(args.resolutions))],
-		    "dur": [0.0 for _ in range(len(args.durations))]
+		    "res": [[] for _ in range(len(args.resolutions))],
+		    "dur": [[] for _ in range(len(args.durations))]
 		}
 		util.log("Processing resolutions...", out)
-		util.log("{0:^20} {1:^20}".format("Resolution", "Threshold"), out)
-		util.log("{0:=^41}".format(''), out)
+		util.log("({0:^5}) {1:^20} {2:^20}".format("#", "Resolution", "Threshold"),
+		         out)
+		util.log("{0:=^49}".format(''), out)
 		for i, res in enumerate(args.resolutions):
-			seqs = seq_provider((res, res), args.precision)
-			util.log("{0:^19} {1:^10} {2:^10}".format("Rate", "bsize", "size"), out)
-			util.log("{0:-^41}".format(''), out)
+			samples = []
+			for j in range(args.iterations):
+				seqs = seq_provider((res, res), args.precision)
+				util.log("{0:^27} {1:^10} {2:^10}".format("Rate", "bsize", "size"), out)
+				util.log("{0:-^49}".format(''), out)
 
-			results["res"][i] = compute_event_threshold(codec, args.entropy_coder,
-			                                            seqs, args.precision, out)
+				threshold = compute_event_threshold(codec, args.entropy_coder, seqs,
+				                                    args.precision, out)
+				samples.append(threshold)
 
-			util.log("{0:=^41}".format(''), out)
-			util.log("{0:^20} {1:^20.8f}".format(res, results["res"][i]), out)
-			util.log("{0:=^41}".format(''), out)
+				util.log("{0:=^49}".format(''), out)
+				util.log("({0:^5}) {1:^20} {2:^20.8f}".format(j + 1, res, threshold),
+				         out)
+				util.log("{0:=^49}".format(''), out)
+
+			results["res"][i] = sum(samples) / args.iterations
+			util.log("{0:=^49}".format(''), out)
+			util.log(
+			    "{0} {1:^20} {2:^20.8f}".format("average", res, results["res"][i]),
+			    out)
+			util.log("{0:=^49}".format(''), out)
 
 
 def compute_event_threshold(codec, coder, seqs, precision, out):
@@ -82,7 +94,7 @@ def compute_event_threshold(codec, coder, seqs, precision, out):
 			bsize = entropy_size(coder, seq_to_bytes(seq))
 			size = entropy_size(coder, encoded)
 
-			util.log("{0:^19.15f} {1:^10} {2:^10}".format(rate, bsize, size), out)
+			util.log("{0:^27.15f} {1:^10} {2:^10}".format(rate, bsize, size), out)
 
 			# Adjust interval according to real rate
 			if size < bsize:
@@ -92,7 +104,7 @@ def compute_event_threshold(codec, coder, seqs, precision, out):
 
 			if start > end:
 				start, end = end, start
-		print("{0:^41}".format("Precision reached"))
+		print("{0:^49}".format("Precision reached"))
 
 	return rate
 

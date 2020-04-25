@@ -15,6 +15,18 @@
 		},
 		{
 			"args": [
+				"-i",
+				"--iterations"
+			],
+			"kwargs": {
+				"dest": "iterations",
+				"type": "@int",
+				"default": "@1",
+				"help": "Number of iterations to average over for each experiment."
+			}
+		},
+		{
+			"args": [
 				"-e",
 				"--compute_effort"
 			],
