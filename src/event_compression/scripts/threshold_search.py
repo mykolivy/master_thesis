@@ -15,9 +15,7 @@ import tempfile
 import operator
 
 
-def seq_provider(res, precision):
-	compute_effort = int(math.ceil(1.0 / precision))
-
+def seq_provider(res, compute_effort):
 	def generate_seq(rate):
 		duration = int(math.ceil(compute_effort / (res[0] * res[1])))
 		duration = max(duration, 2)
@@ -37,12 +35,14 @@ def main():
 
 	codec = codecs()[args.codec]()
 
+	compute_effort = int(math.ceil(1.0 / args.precision)) * args.compute_effort
+
 	os.makedirs(os.path.dirname(args.out), exist_ok=True)
 	with open(args.out, 'w+') as out:
 		util.log(f"Parameters used: {args}\n", out)
 		results = {
-		    "res": [[] for _ in range(len(args.resolutions))],
-		    "dur": [[] for _ in range(len(args.durations))]
+		    "res": [0.0 for _ in range(len(args.resolutions))],
+		    "dur": [0.0 for _ in range(len(args.durations))]
 		}
 		util.log("Processing resolutions...", out)
 		util.log("({0:^5}) {1:^20} {2:^20}".format("#", "Resolution", "Threshold"),
@@ -51,7 +51,8 @@ def main():
 		for i, res in enumerate(args.resolutions):
 			samples = []
 			for j in range(args.iterations):
-				seqs = seq_provider((res, res), args.precision)
+
+				seqs = seq_provider((res, res), compute_effort)
 				util.log("{0:^27} {1:^10} {2:^10}".format("Rate", "bsize", "size"), out)
 				util.log("{0:-^49}".format(''), out)
 
@@ -65,11 +66,18 @@ def main():
 				util.log("{0:=^49}".format(''), out)
 
 			results["res"][i] = sum(samples) / args.iterations
-			util.log("{0:=^49}".format(''), out)
+			util.log("{0:*^49}".format(''), out)
 			util.log(
 			    "{0} {1:^20} {2:^20.8f}".format("average", res, results["res"][i]),
 			    out)
-			util.log("{0:=^49}".format(''), out)
+			util.log("{0:*^49}".format(''), out)
+
+		util.log("{0:^49}".format("SUMMARY"), out)
+		util.log("{0:^24} {1:^24}".format("Resolution", "Threshold"), out)
+		util.log("{0:=^49}".format(''), out)
+		for i, res in enumerate(args.resolutions):
+			util.log("{0:^24} {1:^24.15f}".format(res, results["res"][i]), out)
+		util.log("{0:=^49}".format(''), out)
 
 
 def compute_event_threshold(codec, coder, seqs, precision, out):

@@ -33,8 +33,8 @@
 			"kwargs": {
 				"dest": "compute_effort",
 				"type": "@int",
-				"default": "@2**19",
-				"help": "Total number of pixels in each tested sequence. Either dimensions or duration is altered to meet requirements."
+				"default": "@1",
+				"help": "When total number of pixels for a specific precision is determined, multiply by this number"
 			}
 		},
 		{
