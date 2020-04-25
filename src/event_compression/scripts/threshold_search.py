@@ -13,6 +13,7 @@ from event_compression.sequence.synthetic import RandomChange, Config
 import math
 import tempfile
 import operator
+import json
 
 
 def seq_provider(res, compute_effort):
@@ -83,13 +84,18 @@ def get_pivot(start, end):
 	return (end - start) / 2.0 + start
 
 
-@util.log_result()
 def get_args():
 	parser = util.get_parser(__file__)
 	args = parser.parse_args()
 	args.entropy_coder = ' '.join(args.entropy_coder.split('~'))
 	args.out_redir = '' if args.verbose else '> /dev/null 2>&1'
 	return args
+
+
+def write_args(args, out):
+	for key, value in vars(args).items():
+		out.write("{0:<30} {1}\n".format(key + ":", value))
+	out.flush()
 
 
 def seq_to_bytes(seq):
@@ -108,18 +114,18 @@ def main():
 	codec = codecs()[args.codec]()
 
 	compute_effort = int(math.ceil(1.0 / args.precision)) * args.compute_effort
-	try:
-		os.makedirs(os.path.dirname(args.out))
-	except FileExistsError:
+	if os.path.isfile(args.out):
 		sys.stderr.write(f"ERROR: file {args.out} already exists! Exiting...")
 		exit(1)
+	os.makedirs(os.path.dirname(args.out), exist_ok=True)
 	with open(args.out, 'w+') as out:
-		util.log(f"Parameters used: {args}\n", out)
+		write_args(args, out)
 		results = {
 		    "res": [0.0 for _ in range(len(args.resolutions))],
 		    "dur": [0.0 for _ in range(len(args.durations))]
 		}
-		util.log("Processing resolutions...", out)
+
+		util.log("\nProcessing resolutions...", out)
 		util.log("{0:=^49}".format(''), out)
 		util.log("({0:^5}) {1:^20} {2:^20}".format("#", "Resolution", "Threshold"),
 		         out)
