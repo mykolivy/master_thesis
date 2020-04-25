@@ -12,6 +12,7 @@ from event_compression.codec import codecs
 from event_compression.sequence.synthetic import RandomChange, Config
 import math
 import tempfile
+import operator
 
 
 def seq_provider(res, precision):
@@ -19,6 +20,7 @@ def seq_provider(res, precision):
 
 	def generate_seq(rate):
 		duration = int(math.ceil(compute_effort / (res[0] * res[1])))
+		duration = max(duration, 2)
 		seq_config = Config(res,
 		                    1,
 		                    duration,
@@ -38,56 +40,64 @@ def main():
 	os.makedirs(os.path.dirname(args.out), exist_ok=True)
 	with open(args.out, 'w+') as out:
 		util.log(f"Parameters used: {args}\n", out)
-		util.log(f"RES, DURATION: THRESHOLD", out)
 		results = {
 		    "res": [0.0 for _ in range(len(args.resolutions))],
 		    "dur": [0.0 for _ in range(len(args.durations))]
 		}
-
 		util.log("Processing resolutions...", out)
+		util.log("{0:^20} {1:^20}".format("Resolution", "Threshold"), out)
+		util.log("{0:=^41}".format(''), out)
 		for i, res in enumerate(args.resolutions):
 			seqs = seq_provider((res, res), args.precision)
+			util.log("{0:^19} {1:^10} {2:^10}".format("Rate", "bsize", "size"), out)
+			util.log("{0:-^41}".format(''), out)
+
 			results["res"][i] = compute_event_threshold(codec, args.entropy_coder,
-			                                            seqs, args.precision)
-			util.log(results["res"][i], out)
+			                                            seqs, args.precision, out)
 
-		util.log('', out)
-		util.log(f"RESULT SUMMARY:\n{results}\n", out)
+			util.log("{0:=^41}".format(''), out)
+			util.log("{0:^20} {1:^20.8f}".format(res, results["res"][i]), out)
+			util.log("{0:=^41}".format(''), out)
 
 
-def compute_event_threshold(codec, coder, seqs, precision):
+def compute_event_threshold(codec, coder, seqs, precision, out):
 	start = 0.0
 	end = 1.0
 
-	bsize = 100
-	size = 0
+	bsize = 0
+	size = 1
 
-	rate = None
+	while bsize < size:
+		start = start - 0.01
+		rate = 0.0
+		prev_rate = 1.0
+		while abs(rate - prev_rate) >= precision:
+			prev_rate = rate
+			rate = get_pivot(start, end)
+			seq = seqs(rate)
+			rate = seq.rate
 
-	while abs(bsize - size) >= precision:
-		rate = get_pivot(start, end)
-		seq = seqs(rate)
-		rate = seq.rate
+			encoded = functools.reduce(operator.add, codec.encoder(seq), bytearray())
 
-		bsize = compute_baseline_size(coder, seq)
-		size = compute_size(codec.encoder(seq))
+			bsize = entropy_size(coder, seq_to_bytes(seq))
+			size = entropy_size(coder, encoded)
 
-		print(f"Rate: {rate}, bsize: {bsize}, size: {size}")
+			util.log("{0:^19.15f} {1:^10} {2:^10}".format(rate, bsize, size), out)
 
-		# Adjust interval according to real rate
-		if size < bsize:
-			start = rate
-		else:
-			end = rate
+			# Adjust interval according to real rate
+			if size < bsize:
+				start = rate
+			else:
+				end = rate
 
-		if start > end:
-			start, end = end, start
+			if start > end:
+				start, end = end, start
+		print("{0:^41}".format("Precision reached"))
 
 	return rate
 
 
-def compute_baseline_size(coder: str, seq):
-	data = seq_to_bytes(seq)
+def entropy_size(coder: str, data):
 	with tempfile.NamedTemporaryFile('w+b') as raw:
 		with tempfile.NamedTemporaryFile('w+b') as baseline:
 			raw.write(data)
