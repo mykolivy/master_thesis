@@ -30,56 +30,6 @@ def seq_provider(res, compute_effort):
 	return generate_seq
 
 
-def main():
-	args = get_args()
-
-	codec = codecs()[args.codec]()
-
-	compute_effort = int(math.ceil(1.0 / args.precision)) * args.compute_effort
-
-	os.makedirs(os.path.dirname(args.out), exist_ok=True)
-	with open(args.out, 'w+') as out:
-		util.log(f"Parameters used: {args}\n", out)
-		results = {
-		    "res": [0.0 for _ in range(len(args.resolutions))],
-		    "dur": [0.0 for _ in range(len(args.durations))]
-		}
-		util.log("Processing resolutions...", out)
-		util.log("({0:^5}) {1:^20} {2:^20}".format("#", "Resolution", "Threshold"),
-		         out)
-		util.log("{0:=^49}".format(''), out)
-		for i, res in enumerate(args.resolutions):
-			samples = []
-			for j in range(args.iterations):
-
-				seqs = seq_provider((res, res), compute_effort)
-				util.log("{0:^27} {1:^10} {2:^10}".format("Rate", "bsize", "size"), out)
-				util.log("{0:-^49}".format(''), out)
-
-				threshold = compute_event_threshold(codec, args.entropy_coder, seqs,
-				                                    args.precision, out)
-				samples.append(threshold)
-
-				util.log("{0:=^49}".format(''), out)
-				util.log("({0:^5}) {1:^20} {2:^20.8f}".format(j + 1, res, threshold),
-				         out)
-				util.log("{0:=^49}".format(''), out)
-
-			results["res"][i] = sum(samples) / args.iterations
-			util.log("{0:*^49}".format(''), out)
-			util.log(
-			    "{0} {1:^20} {2:^20.8f}".format("average", res, results["res"][i]),
-			    out)
-			util.log("{0:*^49}".format(''), out)
-
-		util.log("{0:^49}".format("SUMMARY"), out)
-		util.log("{0:^24} {1:^24}".format("Resolution", "Threshold"), out)
-		util.log("{0:=^49}".format(''), out)
-		for i, res in enumerate(args.resolutions):
-			util.log("{0:^24} {1:^24.15f}".format(res, results["res"][i]), out)
-		util.log("{0:=^49}".format(''), out)
-
-
 def compute_event_threshold(codec, coder, seqs, precision, out):
 	start = 0.0
 	end = 1.0
@@ -129,10 +79,6 @@ def entropy_size(coder: str, data):
 			return baseline.tell()
 
 
-def compute_size(encoder):
-	return len(functools.reduce(lambda x, y: x + y, encoder, bytearray()))
-
-
 def get_pivot(start, end):
 	return (end - start) / 2.0 + start
 
@@ -154,6 +100,60 @@ def seq_to_bytes(seq):
 		result += frame.tobytes()
 
 	return result
+
+
+def main():
+	args = get_args()
+
+	codec = codecs()[args.codec]()
+
+	compute_effort = int(math.ceil(1.0 / args.precision)) * args.compute_effort
+	try:
+		os.makedirs(os.path.dirname(args.out))
+	except FileExistsError:
+		sys.stderr.write(f"ERROR: file {args.out} already exists! Exiting...")
+		exit(1)
+	with open(args.out, 'w+') as out:
+		util.log(f"Parameters used: {args}\n", out)
+		results = {
+		    "res": [0.0 for _ in range(len(args.resolutions))],
+		    "dur": [0.0 for _ in range(len(args.durations))]
+		}
+		util.log("Processing resolutions...", out)
+		util.log("{0:=^49}".format(''), out)
+		util.log("({0:^5}) {1:^20} {2:^20}".format("#", "Resolution", "Threshold"),
+		         out)
+		util.log("{0:=^49}".format(''), out)
+		for i, res in enumerate(args.resolutions):
+			samples = []
+			for j in range(args.iterations):
+
+				seqs = seq_provider((res, res), compute_effort)
+				util.log("{0:^27} {1:^10} {2:^10}".format("Rate", "bsize", "size"), out)
+				util.log("{0:-^49}".format(''), out)
+
+				threshold = compute_event_threshold(codec, args.entropy_coder, seqs,
+				                                    args.precision, out)
+				samples.append(threshold)
+
+				util.log("{0:=^49}".format(''), out)
+				util.log("({0:^5}) {1:^20} {2:^20.8f}".format(j + 1, res, threshold),
+				         out)
+				util.log("{0:=^49}".format(''), out)
+
+			results["res"][i] = sum(samples) / args.iterations
+			util.log("{0:*^49}".format(''), out)
+			util.log(
+			    "{0} {1:^20} {2:^20.8f}".format("average", res, results["res"][i]),
+			    out)
+			util.log("{0:*^49}".format(''), out)
+
+		util.log("{0:^49}".format("SUMMARY"), out)
+		util.log("{0:^24} {1:^24}".format("Resolution", "Threshold"), out)
+		util.log("{0:=^49}".format(''), out)
+		for i, res in enumerate(args.resolutions):
+			util.log("{0:^24} {1:^24.15f}".format(res, results["res"][i]), out)
+		util.log("{0:=^49}".format(''), out)
 
 
 if __name__ == "__main__":
