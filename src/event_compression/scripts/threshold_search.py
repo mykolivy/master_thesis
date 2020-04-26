@@ -10,97 +10,11 @@ import functools
 from event_compression.scripts import util
 from event_compression.codec import codecs
 from event_compression.sequence.synthetic import RandomChange, Config
+from event_compression.analysis.threshold_search import *
 import math
 import tempfile
 import operator
 import json
-
-
-def res_seq_provider(res, compute_effort):
-	res = (res, res)
-
-	def generate_seq(rate):
-		duration = int(math.ceil(compute_effort / (res[0] * res[1])))
-		duration = max(duration, 2)
-		seq_config = Config(res,
-		                    1,
-		                    duration,
-		                    rate=float(rate),
-		                    val_range=(0, 256),
-		                    dtype='uint8')
-		return RandomChange(seq_config)
-
-	return generate_seq
-
-
-def time_seq_provider(time, compute_effort):
-	assert time > 1
-
-	def generate_seq(rate):
-		res = int(math.ceil(math.sqrt(compute_effort / time)))
-		res = max(res, 1)
-		seq_config = Config((res, res),
-		                    1,
-		                    time,
-		                    rate=float(rate),
-		                    val_range=(0, 256),
-		                    dtype='uint8')
-		return RandomChange(seq_config)
-
-	return generate_seq
-
-
-def compute_event_threshold(codec, coder, seqs, precision, out):
-	start = 0.0
-	end = 1.0
-
-	bsize = 0
-	size = 1
-
-	while bsize < size:
-		start = start - 0.01
-		rate = 0.0
-		prev_rate = 1.0
-		while abs(rate - prev_rate) >= precision:
-			prev_rate = rate
-			rate = get_pivot(start, end)
-			seq = seqs(rate)
-			rate = seq.rate
-
-			encoded = functools.reduce(operator.add, codec.encoder(seq), bytearray())
-
-			bsize = entropy_size(coder, seq_to_bytes(seq))
-			size = entropy_size(coder, encoded)
-
-			util.log("{0:^27.15f} {1:^10} {2:^10}".format(rate, bsize, size), out)
-
-			# Adjust interval according to real rate
-			if size < bsize:
-				start = rate
-			else:
-				end = rate
-
-			if start > end:
-				start, end = end, start
-		print("{0:^49}".format("Precision reached"))
-
-	return rate
-
-
-def entropy_size(coder: str, data):
-	with tempfile.NamedTemporaryFile('w+b') as raw:
-		with tempfile.NamedTemporaryFile('w+b') as baseline:
-			raw.write(data)
-			raw.flush()
-
-			os.system(f"{coder} {raw.name} {baseline.name} > /dev/null 2>&1")
-
-			baseline.seek(0, 2)
-			return baseline.tell()
-
-
-def get_pivot(start, end):
-	return (end - start) / 2.0 + start
 
 
 def get_args():
@@ -116,53 +30,98 @@ def print_args(args, out):
 		util.log("{0:<30} {1}".format(key + ":", value), out)
 
 
-def seq_to_bytes(seq):
-	result = bytearray()
-
-	for frame in iter(seq):
-		assert frame.dtype == 'uint8'
-		result += frame.tobytes()
-
-	return result
-
-
 def tabulate_search(points, seq_provider, args, out, header):
 	compute_effort = int(math.ceil(1.0 / args.precision)) * args.compute_effort
 	codec = codecs()[args.codec]()
-	results = [0.0 for _ in range(len(points))]
+	results = [None for _ in range(len(points))]
+	table = Table(80, lambda x: util.log(x, out))
 
-	util.log("{0:=^49}".format(''), out)
-	util.log("({0:^5}) {1:^20} {2:^20}".format("#", header, "Threshold"), out)
-	util.log("{0:=^49}".format(''), out)
+	table.print_line("=")
+	table.print("#.",
+	            "Resolution",
+	            "Frames",
+	            "Threshold",
+	            lengths=[5, 20, 20, 35])
+	table.print_line("=")
 
 	for i, point in enumerate(points):
 		samples = []
+		threshold = (None, None, None, None, None)
 		for j in range(args.iterations):
 
 			seqs = seq_provider(point, compute_effort)
-			util.log("{0:^27} {1:^10} {2:^10}".format("Rate", "bsize", "size"), out)
-			util.log("{0:-^49}".format(''), out)
+			table.print("Rate", "Resolution", "Frames", "bsize", "size")
+			table.print_line("-")
 
-			threshold = compute_event_threshold(codec, args.entropy_coder, seqs,
-			                                    args.precision, out)
-			samples.append(threshold)
+			tab = tab_event_threshold(codec, args.entropy_coder, seqs, args.precision)
+			threshold = get_threshold(tab, table)
+			samples.append(threshold[2])
 
-			util.log("{0:=^49}".format(''), out)
-			util.log("({0:^5}) {1:^20} {2:^20.8f}".format(j + 1, point, threshold),
-			         out)
-			util.log("{0:=^49}".format(''), out)
+			table.print_line("=")
+			table.print(f"{j+1}.", *threshold, lengths=[5, 20, 20, 35])
+			table.print_line("=")
 
-		results[i] = sum(samples) / args.iterations
-		util.log("{0:*^49}".format(''), out)
-		util.log("{0} {1:^20} {2:^20.8f}".format("average", point, results[i]), out)
-		util.log("{0:*^49}".format(''), out)
+		results[i] = (threshold[0], threshold[1], sum(samples) / args.iterations)
+		table.print_line("*")
+		table.print("avg:", *results[i], lengths=[5, 25, 25, 25])
+		table.print_line("*")
 
-	util.log("{0:^49}".format("SUMMARY"), out)
-	util.log("{0:^24} {1:^24}".format(header, "Threshold"), out)
-	util.log("{0:=^49}".format(''), out)
+	table.print("SUMMARY")
+	table.print("Resolution", "Frames", "Threshold", lengths=[20, 20, 40])
+	table.print_line("=")
 	for i, point in enumerate(points):
-		util.log("{0:^24} {1:^24.15f}".format(point, results[i]), out)
-	util.log("{0:=^49}".format(''), out)
+		table.print(*results[i], lengths=[20, 20, 40])
+	table.print_line("=")
+
+
+def get_threshold(event_threshold_tab, table):
+	it = iter(event_threshold_tab)
+	result = None
+	prev = next(it, None)
+	while prev:
+		result = prev
+		prev = next(it, None)
+		if prev:
+			if isinstance(result, str):
+				table.print(result)
+			else:
+				table.print(*result)
+	return result
+
+
+class Table:
+	def __init__(self, width, printer):
+		self.width = width
+		self.printer = printer
+
+	def print(self, *args, lengths=None):
+		pattern = ""
+		args = [arg for arg in args]
+
+		if not lengths:
+			length = int(self.width / len(args))
+			lengths = [length for x in args]
+
+		if len(args) != len(lengths) or sum(lengths) != self.width:
+			breakpoint()
+			raise AttributeError()
+
+		pattern = ""
+		for i, arg in enumerate(args):
+			if isinstance(arg, tuple):
+				args[i] = str(arg)
+
+		for arg, length in zip(args, lengths):
+			if isinstance(arg, float):
+				pattern = pattern + ("{:^" + f"{length}" + ".10}")
+			else:
+				pattern = pattern + ("{:^" + f"{length}" + "}")
+
+		self.printer(pattern.format(*args))
+
+	def print_line(self, symbol):
+		pattern = "{0:" + f"{symbol}" + "^" + f"{self.width}" + "}"
+		self.printer(pattern.format(""))
 
 
 def main():
