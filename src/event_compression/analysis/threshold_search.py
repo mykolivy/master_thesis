@@ -45,6 +45,21 @@ def time_seq_provider(time, compute_effort):
 	return generate_seq
 
 
+def res_time_seq_provider(res, frame_num):
+	assert frame_num > 1
+
+	def generate_seq(rate):
+		seq_config = Config((res, res),
+		                    1,
+		                    frame_num,
+		                    rate=float(rate),
+		                    val_range=(0, 256),
+		                    dtype='uint8')
+		return RandomChange(seq_config)
+
+	return generate_seq
+
+
 def tab_event_threshold(codec, coder, seqs, precision):
 	start = 0.0
 	end = 1.0

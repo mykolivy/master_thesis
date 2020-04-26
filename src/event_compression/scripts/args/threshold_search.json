@@ -45,7 +45,7 @@
 			"kwargs": {
 				"dest": "durations",
 				"type": "@int",
-				"default": "@[2**(x+1) for x in range(4)]",
+				"default": "@[2**(x+1) for x in range(8)]",
 				"nargs": "+",
 				"help": "Durations (total number of frames) of generated ssequences to find event performance threshold on."
 			}
@@ -72,6 +72,18 @@
 				"dest": "verbose",
 				"action": "store_true",
 				"help": "Wether to include more logging information to the standard output."
+			}
+		},
+		{
+			"args": [
+				"-m",
+				"--mode"
+			],
+			"kwargs": {
+				"dest": "mode",
+				"choices": "@['compute_load', 'dims_frames']",
+				"default": "compute_load",
+				"help": "Mode of operation. 'compute_load' -- adjusts resolution or frame numbers to be bounded by precision requirements. 'dims_frames' -- searches on sequences with exact dimesions and number of frames."
 			}
 		},
 		{

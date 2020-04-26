@@ -30,8 +30,8 @@ def print_args(args, out):
 		util.log("{0:<30} {1}".format(key + ":", value), out)
 
 
-def tabulate_search(points, seq_provider, args, out, header):
-	compute_effort = int(math.ceil(1.0 / args.precision)) * args.compute_effort
+def tabulate_search(points, seq_provider, args, out):
+
 	codec = codecs()[args.codec]()
 	results = [None for _ in range(len(points))]
 	table = Table(80, lambda x: util.log(x, out))
@@ -49,7 +49,7 @@ def tabulate_search(points, seq_provider, args, out, header):
 		threshold = (None, None, None, None, None)
 		for j in range(args.iterations):
 
-			seqs = seq_provider(point, compute_effort)
+			seqs = seq_provider(*point)
 			table.print("Rate", "Resolution", "Frames", "bsize", "size")
 			table.print_line("-")
 
@@ -134,11 +134,29 @@ def main():
 	with open(args.out, 'w+') as out:
 		print_args(args, out)
 
-		util.log("\nProcessing resolutions...", out)
-		tabulate_search(args.resolutions, res_seq_provider, args, out, "Resolution")
+		if args.mode == 'compute_load':
+			comp_eff = int(math.ceil(1.0 / args.precision)) * args.compute_effort
+			comp_effs = [comp_eff] * len(args.resolutions)
 
-		util.log("\nProcessing durations...", out)
-		tabulate_search(args.durations, time_seq_provider, args, out, "Duration")
+			util.log("\n\nProcessing resolutions...", out)
+			points = list(zip(args.resolutions, comp_effs))
+			tabulate_search(points, res_seq_provider, args, out)
+
+			comp_effs = [comp_eff] * len(args.durations)
+
+			util.log("\n\nProcessing durations...", out)
+			points = list(zip(args.durations, comp_effs))
+			tabulate_search(points, time_seq_provider, args, out)
+		else:
+			for duration in args.durations:
+
+				table = Table(80, lambda x: util.log(x, out))
+				table.print_line("")
+				table.print_line("~")
+				table.print(f"FRAME NUMBER: {duration}")
+				table.print_line("~")
+				points = list(zip(args.resolutions, [duration] * len(args.resolutions)))
+				tabulate_search(points, res_time_seq_provider, args, out)
 
 
 if __name__ == "__main__":
