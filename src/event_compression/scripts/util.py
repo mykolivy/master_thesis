@@ -91,3 +91,8 @@ def log_result():
 def log(msg, out, end='\n'):
 	print(msg, end=end, flush=True)
 	out.write(f'{msg}{end}')
+
+
+def print_args(args, out):
+	for key, value in vars(args).items():
+		log("{0:<30} {1}".format(key + ":", value), out)

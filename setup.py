@@ -19,13 +19,14 @@ setup(
     packages=find_packages('src'),
     package_data={
         "": ["*.json"],
-        "scripts": ["args"]
+        "scripts": ["args", "bin"]
     },
     include_package_data=True,
     entry_points={
         "console_scripts": [
             "synthetic = event_compression.scripts.synthetic:main",
-            "threshold_search = event_compression.scripts.threshold_search:main"
+            "threshold_search = event_compression.scripts.threshold_search:main",
+            "compress = event_compression.scripts.compress:main"
         ]
     },
     install_requires=[

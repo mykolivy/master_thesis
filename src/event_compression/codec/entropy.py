@@ -1,5 +1,6 @@
 """Define entropy codecs"""
 import struct, tempfile, functools, itertools, os
+from pathlib import Path
 import numpy as np
 from .util import *
 
@@ -8,7 +9,7 @@ from .util import *
 class LPAQ1:
 	"""
 	"""
-	coder = "bin/lpaq1"
+	coder = Path(__file__).parents[1] / Path("scripts/bin/lpaq1")
 
 	@classmethod
 	def encoder(cls, frames, N=0) -> bytearray:

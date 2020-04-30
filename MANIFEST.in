@@ -1,3 +1,4 @@
 graft docs
 prune docs/build
 graft src/event_compression/scripts/args
+graft src/event_compression/scripts/bin

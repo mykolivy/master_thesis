@@ -1,0 +1,52 @@
+{
+	"description": "Compress/decompress video file with a given codec.",
+	"args": [
+		{
+			"args": [
+				"-v",
+				"--verbose"
+			],
+			"kwargs": {
+				"dest": "verbose",
+				"action": "store_true",
+				"help": "Wether to include more logging information to the standard output."
+			}
+		},
+		{
+			"args": [
+				"-d",
+				"--decompress"
+			],
+			"kwargs": {
+				"dest": "decompress",
+				"action": "store_true",
+				"help": "Perform decompression with the codec if this flag is set."
+			}
+		},
+		{
+			"args": [
+				"codec"
+			],
+			"kwargs": {
+				"help": "Codec to compress with.",
+				"choices": "@codecs"
+			}
+		},
+		{
+			"args": [
+				"input"
+			],
+			"kwargs": {
+				"help": "Input file."
+			}
+		},
+		{
+			"args": [
+				"output"
+			],
+			"kwargs": {
+				"help": "Output file."
+			}
+		}
+	]
+}
