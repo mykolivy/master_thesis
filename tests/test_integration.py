@@ -1,6 +1,7 @@
 import pytest, operator, functools, tempfile, os
 import numpy as np
 from event_compression.codec.aer import AER
+from event_compression.codec.caer import CAER
 from event_compression.sequence.synthetic import RandomChange, Config
 
 
@@ -99,25 +100,75 @@ class TestThresholdSearch:
 		"""
 		resolutions = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
 		frames = [10000, 2500, 625, 157, 40, 10, 3, 2, 2, 2, 2]
-		satis_rates = [
-		    0.05, 0.3, 0.2, 0.23, 0.15, 0.17, 0.25, 0.37, 0.447, 0.48, 0.497
+		result_rates = [
+		    0.05550555056, 0.3225090036, 0.2666266026, 0.2396233974, 0.1547475962,
+		    0.1750759549, 0.2606689453, 0.3762268066, 0.4510757446, 0.4868911743,
+		    0.5026011467
 		]
-		unsatis_rates = [x + 0.1 for x in satis_rates]
 
-		assert len(resolutions) == len(satis_rates)
-		assert len(resolutions) == len(unsatis_rates)
+		srates = [x - 0.01 for x in result_rates]
+		nrates = [x + 0.01 for x in result_rates]
+
+		codec = AER
+
+		assert len(resolutions) == len(srates)
+		assert len(resolutions) == len(nrates)
 
 		results = {x: [False, False] for x in resolutions}
 
-		for res, num_frames, srate, nrate in zip(resolutions, frames, satis_rates,
-		                                         unsatis_rates):
-			codec = AER
-
-			config = Config((res, res), 1, num_frames, rate=srate)
+		for res, n_frames, srate, nrate in zip(resolutions, frames, srates, nrates):
+			config = Config((res, res), 1, n_frames, rate=srate)
 			seq = RandomChange(config)
 			results[res][0] = check_result(seq, codec)
 
-			config = Config((res, res), 1, num_frames, rate=nrate)
+			config = Config((res, res), 1, n_frames, rate=nrate)
+			seq = RandomChange(config)
+			results[res][1] = check_result(seq, codec, negative=True)
+
+		print(results)
+		assert all([all(x) for x in results.values()])
+
+	def test_caer_resolutions(self):
+		"""
+	                                    SUMMARY                                     
+     Resolution            Frames                      Threshold                
+================================================================================
+       (1, 1)              10000                     0.06589658966              
+       (2, 2)               2500                      0.3960184074              
+       (4, 4)               625                       0.3931590545              
+       (8, 8)               157                       0.4565504808              
+      (16, 16)               40                       0.5116586538              
+      (32, 32)               10                       0.588140191              
+      (64, 64)               3                        0.6868408203              
+     (128, 128)              2                        0.8062927246              
+     (256, 256)              2                        0.828968811              
+     (512, 512)              2                        0.8326633453              
+    (1024, 1024)             2                        0.8334960938              
+================================================================================
+		"""
+		resolutions = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+		frames = [10000, 2500, 625, 157, 40, 10, 3, 2, 2, 2, 2]
+		result_rates = [
+		    0.06589658966, 0.3960184074, 0.3931590545, 0.4565504808, 0.5116586538,
+		    0.588140191, 0.6868408203, 0.8062927246, 0.828968811, 0.8326633453,
+		    0.8334960938
+		]
+		srates = [x - 0.01 for x in result_rates]
+		nrates = [x + 0.01 for x in result_rates]
+
+		codec = CAER
+
+		assert len(resolutions) == len(srates)
+		assert len(resolutions) == len(nrates)
+
+		results = {x: [False, False] for x in resolutions}
+
+		for res, n_frames, srate, nrate in zip(resolutions, frames, srates, nrates):
+			config = Config((res, res), 1, n_frames, rate=srate)
+			seq = RandomChange(config)
+			results[res][0] = check_result(seq, codec)
+
+			config = Config((res, res), 1, n_frames, rate=nrate)
 			seq = RandomChange(config)
 			results[res][1] = check_result(seq, codec, negative=True)
 
