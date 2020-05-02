@@ -106,8 +106,12 @@ class TestThresholdSearch:
 		    0.5026011467
 		]
 
+		resolutions = resolutions[:-2]
+		frames = frames[:-2]
+		result_rates = result_rates[:-2]
+
 		srates = [x - 0.01 for x in result_rates]
-		nrates = [x + 0.01 for x in result_rates]
+		nrates = [x + 0.05 for x in result_rates]
 
 		codec = AER
 
@@ -153,6 +157,11 @@ class TestThresholdSearch:
 		    0.588140191, 0.6868408203, 0.8062927246, 0.828968811, 0.8326633453,
 		    0.8334960938
 		]
+
+		resolutions = resolutions[:-2]
+		frames = frames[:-2]
+		result_rates = result_rates[:-2]
+
 		srates = [x - 0.01 for x in result_rates]
 		nrates = [x + 0.01 for x in result_rates]
 
