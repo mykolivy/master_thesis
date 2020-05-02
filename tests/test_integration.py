@@ -39,6 +39,45 @@ def entropy_decompress(decoder, data):
 				return f.read()
 
 
+def check_result(seq, codec, negative=False):
+	coder = "src/event_compression/scripts/bin/lpaq1 0"
+	decoder = "src/event_compression/scripts/bin/lpaq1 d"
+
+	frames1 = [x.copy() for x in iter(seq)]
+	frames2 = [x.copy() for x in iter(seq)]
+
+	if not all([np.equal(x, y).all() for x, y in zip(frames1, frames2)]):
+		return False
+
+	raw_data = seq_to_bytes(frames1)
+	encoded = functools.reduce(operator.add, codec.encoder(frames2), bytearray())
+
+	bpaq = entropy_compress(coder, raw_data)
+	paq = entropy_compress(coder, encoded)
+
+	bsize = len(bpaq)
+	size = len(paq)
+
+	# this is the main test of compressed sizes
+	condition = size < bsize
+	print(negative)
+	if (not (negative or condition)) or (negative and condition):
+		return False
+
+	# Test correct decompression
+	raw_decoded = entropy_decompress(decoder, bpaq)
+	aer_decoded = entropy_decompress(decoder, paq)
+	decoded = [x.copy() for x in codec.decoder(aer_decoded)]
+
+	if raw_data != raw_decoded:
+		return False
+
+	if not all([np.equal(x, y).all() for x, y in zip(frames2, decoded)]):
+		return False
+
+	return True
+
+
 class TestThresholdSearch:
 	def test_aer_resolutions(self):
 		"""
@@ -68,82 +107,19 @@ class TestThresholdSearch:
 		assert len(resolutions) == len(satis_rates)
 		assert len(resolutions) == len(unsatis_rates)
 
-		results = [False for x in resolutions]
+		results = {x: [False, False] for x in resolutions}
 
-		for i, (res, num_frames, srate, nrate) in enumerate(
-		    zip(resolutions, frames, satis_rates, unsatis_rates)):
+		for res, num_frames, srate, nrate in zip(resolutions, frames, satis_rates,
+		                                         unsatis_rates):
+			codec = AER
+
 			config = Config((res, res), 1, num_frames, rate=srate)
 			seq = RandomChange(config)
-			codec = AER
-			coder = "src/event_compression/scripts/bin/lpaq1 0"
-			decoder = "src/event_compression/scripts/bin/lpaq1 d"
+			results[res][0] = check_result(seq, codec)
 
-			frames1 = [x.copy() for x in iter(seq)]
-			frames2 = [x.copy() for x in iter(seq)]
-
-			if not all([np.equal(x, y).all() for x, y in zip(frames1, frames2)]):
-				continue
-
-			raw_data = seq_to_bytes(frames1)
-			encoded = functools.reduce(operator.add, codec.encoder(frames2),
-			                           bytearray())
-
-			bpaq = entropy_compress(coder, raw_data)
-			paq = entropy_compress(coder, encoded)
-
-			bsize = len(bpaq)
-			size = len(paq)
-
-			# this is the main test of compressed sizes
-			if not size < bsize:
-				continue
-
-			# Test correct decompression
-			raw_decoded = entropy_decompress(decoder, bpaq)
-			aer_decoded = entropy_decompress(decoder, paq)
-			decoded = [x.copy() for x in codec.decoder(aer_decoded)]
-
-			if not raw_data == raw_decoded:
-				continue
-			if not all([np.equal(x, y).all() for x, y in zip(frames2, decoded)]):
-				continue
-
-			results[i] = True
-
-		print(results)
-		assert all(results)
-
-		# Test negative
-		results = [False for x in resolutions]
-		for i, (res, num_frames, srate, nrate) in enumerate(
-		    zip(resolutions, frames, satis_rates, unsatis_rates)):
 			config = Config((res, res), 1, num_frames, rate=nrate)
 			seq = RandomChange(config)
-			codec = AER
-			coder = "src/event_compression/scripts/bin/lpaq1 0"
-			decoder = "src/event_compression/scripts/bin/lpaq1 d"
+			results[res][1] = check_result(seq, codec, negative=True)
 
-			frames1 = [x.copy() for x in iter(seq)]
-			frames2 = [x.copy() for x in iter(seq)]
-
-			if not all([np.equal(x, y).all() for x, y in zip(frames1, frames2)]):
-				continue
-
-			raw_data = seq_to_bytes(frames1)
-			encoded = functools.reduce(operator.add, codec.encoder(frames2),
-			                           bytearray())
-
-			bpaq = entropy_compress(coder, raw_data)
-			paq = entropy_compress(coder, encoded)
-
-			bsize = len(bpaq)
-			size = len(paq)
-
-			# this is the main test of compressed sizes
-			if size < bsize:
-				continue
-
-			results[i] = True
-
-		print(f"Results for bigger rates: {results}")
-		assert all(results)
+		print(results)
+		assert all([all(x) for x in results.values()])
