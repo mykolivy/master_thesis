@@ -15,11 +15,12 @@ import tempfile
 import operator
 import json
 from pathlib import Path
-from event_compression.sequence.video import VideoSequence, FileBytes
+from event_compression.sequence.video import VideoSequence, FileBytes, GrayscaleVideoConverter
 
 
 def compress(codec, inp, out):
-	frames = VideoSequence(inp)
+	frames = GrayscaleVideoConverter(VideoSequence(inp))
+
 	for data in codec.encoder(frames):
 		out.write(data)
 

@@ -11,16 +11,16 @@ class VideoSequence:
 	def __init__(self, src):
 		self.src = src
 		self.frame = None
+		self.cap = cv2.VideoCapture(self.src.name)
 
 	def __iter__(self) -> np.ndarray:
-		cap = cv2.VideoCapture(self.src.name)
-		success, self.frame = cap.read()
+		success, self.frame = self.cap.read()
 		while success:
 			yield self.frame
-			success, self.frame = cap.read()
+			success, self.frame = self.cap.read()
 
 	def __len__(self):
-		return 0
+		return int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 
 class FileBytes:
@@ -30,3 +30,15 @@ class FileBytes:
 	def __iter__(self):
 		with open(self.src, 'rb') as f:
 			yield f.read()
+
+
+class GrayscaleVideoConverter:
+	def __init__(self, video_seq):
+		self.video_seq = video_seq
+
+	def __iter__(self):
+		for frame in self.video_seq:
+			yield np.round(np.sum(frame, 2) / 3.).astype('uint8')
+
+	def __len__(self):
+		return len(self.video_seq)

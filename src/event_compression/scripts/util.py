@@ -6,7 +6,7 @@ from datetime import datetime
 from event_compression.codec import codecs
 from event_compression.sequence import sequences
 
-codecs = list(codecs().keys()).append("raw")
+codecs = list(codecs().keys())
 sequences = list(sequences().keys())
 
 
