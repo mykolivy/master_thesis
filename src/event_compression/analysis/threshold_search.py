@@ -101,15 +101,31 @@ def tab_event_threshold(codec, coder, seqs, precision):
 
 
 def entropy_size(coder: str, data):
-	with tempfile.NamedTemporaryFile('w+b') as raw:
-		with tempfile.NamedTemporaryFile('w+b') as baseline:
-			raw.write(data)
-			raw.flush()
+	if coder == "entropy":
+		return compute_entropy(data)
+	else:
+		with tempfile.NamedTemporaryFile('w+b') as raw:
+			with tempfile.NamedTemporaryFile('w+b') as baseline:
+				raw.write(data)
+				raw.flush()
 
-			os.system(f"{coder} {raw.name} {baseline.name} > /dev/null 2>&1")
+				os.system(f"{coder} {raw.name} {baseline.name} > /dev/null 2>&1")
 
-			baseline.seek(0, 2)
-			return baseline.tell()
+				baseline.seek(0, 2)
+				return baseline.tell()
+
+
+def compute_entropy(data):
+	histogram = np.array([0.0 for x in range(256)])
+	for b in data:
+		histogram[b] += 1
+	histogram = histogram / np.sum(histogram)
+
+	entropy = 0.0
+	for p in histogram:
+		if p > 0:
+			entropy -= p * math.log(p, 256)
+	return entropy
 
 
 def get_pivot(start, end):
