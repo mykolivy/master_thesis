@@ -49,7 +49,7 @@ def tabulate_search(points, seq_provider, args, out):
 		threshold = (None, None, None, None, None)
 		for j in range(args.iterations):
 
-			seqs = seq_provider(*point)
+			seqs = seq_provider(*point, val_range=args.range)
 			table.print("Rate", "Resolution", "Frames", "bsize", "size")
 			table.print_line("-")
 
@@ -126,6 +126,7 @@ class Table:
 
 def main():
 	args = get_args()
+	args.range = tuple(args.range)
 
 	if os.path.isfile(args.out):
 		sys.stderr.write(f"ERROR: file {args.out} already exists! Exiting...")

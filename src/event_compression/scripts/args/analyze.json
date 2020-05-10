@@ -1,0 +1,26 @@
+{
+	"description": "Compress/decompress video file with a given codec.",
+	"args": [
+		{
+			"args": [
+				"-v",
+				"--verbose"
+			],
+			"kwargs": {
+				"dest": "verbose",
+				"action": "store_true",
+				"help": "Wether to include more logging information to the standard output."
+			}
+		},
+		{
+			"args": [
+				"files"
+			],
+			"kwargs": {
+				"type": "@str",
+				"nargs": "+",
+				"help": "List of files to analyze."
+			}
+		}
+	]
+}

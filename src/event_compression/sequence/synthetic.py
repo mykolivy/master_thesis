@@ -163,6 +163,7 @@ class RandomChange:
 		self.changable_num = int(self.res_sq * self.conf.rate)
 		self.dist, self.rate = self.get_change_dist()
 		self.range_width = self.conf.range[1] - self.conf.range[0]
+		self.population = range(self.res_sq)
 
 	def __iter__(self):
 		random.seed(self.seed)
@@ -171,8 +172,7 @@ class RandomChange:
 		yield frame
 
 		for change in self.dist:
-			population = range(self.res_sq)
-			self.set_from_events(frame, random.sample(population, change))
+			self.set_from_events(frame, random.sample(self.population, change))
 			yield frame
 
 	def get_change_dist(self):

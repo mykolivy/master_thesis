@@ -39,6 +39,17 @@
 		},
 		{
 			"args": [
+				"--range"
+			],
+			"kwargs": {
+				"default": "@[0,256]",
+				"type": "@int",
+				"nargs": "@2",
+				"help": "Range of pixel values in the generated sequence in [a, b) range."
+			}
+		},
+		{
+			"args": [
 				"-d",
 				"--durations"
 			],

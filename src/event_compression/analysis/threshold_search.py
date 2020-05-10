@@ -11,7 +11,7 @@ import tempfile
 import os
 
 
-def res_seq_provider(res, compute_effort):
+def res_seq_provider(res, compute_effort, val_range=(0, 256)):
 	res = (res, res)
 
 	def generate_seq(rate):
@@ -21,14 +21,14 @@ def res_seq_provider(res, compute_effort):
 		                    1,
 		                    duration,
 		                    rate=float(rate),
-		                    val_range=(0, 256),
+		                    val_range=val_range,
 		                    dtype='uint8')
 		return RandomChange(seq_config)
 
 	return generate_seq
 
 
-def time_seq_provider(time, compute_effort):
+def time_seq_provider(time, compute_effort, val_range=(0, 256)):
 	assert time > 1
 
 	def generate_seq(rate):
@@ -38,14 +38,14 @@ def time_seq_provider(time, compute_effort):
 		                    1,
 		                    time,
 		                    rate=float(rate),
-		                    val_range=(0, 256),
+		                    val_range=val_range,
 		                    dtype='uint8')
 		return RandomChange(seq_config)
 
 	return generate_seq
 
 
-def res_time_seq_provider(res, frame_num):
+def res_time_seq_provider(res, frame_num, val_range=(0, 256)):
 	assert frame_num > 1
 
 	def generate_seq(rate):
@@ -53,7 +53,7 @@ def res_time_seq_provider(res, frame_num):
 		                    1,
 		                    frame_num,
 		                    rate=float(rate),
-		                    val_range=(0, 256),
+		                    val_range=val_range,
 		                    dtype='uint8')
 		return RandomChange(seq_config)
 
@@ -80,10 +80,22 @@ def tab_event_threshold(codec, coder, seqs, precision):
 			seq = seqs(rate)
 			rate = seq.rate
 
-			encoded = functools.reduce(operator.add, codec.encoder(seq), bytearray())
+			bsize = 0.
+			size = 0.
 
-			bsize = entropy_size(coder, seq_to_bytes(seq))
-			size = entropy_size(coder, encoded)
+			if coder == "entropy":
+				bsize = compute_entropy(seq_to_bytes(seq))
+				size = compute_entropy(codec.encoder(seq))
+			else:
+				encoded = functools.reduce(operator.add, codec.encoder(seq),
+				                           bytearray())
+				raw = bytearray()
+				for frame in iter(seq):
+					assert frame.dtype == 'uint8'
+					raw += frame.tobytes()
+
+				bsize = entropy_size(coder, raw)
+				size = entropy_size(coder, encoded)
 
 			yield rate, seq.conf.res, len(seq), bsize, size
 
@@ -96,6 +108,8 @@ def tab_event_threshold(codec, coder, seqs, precision):
 			if start > end:
 				start, end = end, start
 		yield "Precision reached"
+		if rate == 0:
+			break
 
 	yield res, frames, rate
 
@@ -117,8 +131,9 @@ def entropy_size(coder: str, data):
 
 def compute_entropy(data):
 	histogram = np.array([0.0 for x in range(256)])
-	for b in data:
-		histogram[b] += 1
+	for chunk in data:
+		for b in chunk:
+			histogram[b] += 1
 	histogram = histogram / np.sum(histogram)
 
 	entropy = 0.0
@@ -129,14 +144,10 @@ def compute_entropy(data):
 
 
 def get_pivot(start, end):
-	return (end - start) / 2.0 + start
+	return max((end - start) / 2.0 + start, 0)
 
 
 def seq_to_bytes(seq):
-	result = bytearray()
-
 	for frame in iter(seq):
 		assert frame.dtype == 'uint8'
-		result += frame.tobytes()
-
-	return result
+		yield frame.tobytes()
