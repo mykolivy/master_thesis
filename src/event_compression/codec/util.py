@@ -59,6 +59,21 @@ def events_from_frames(frames):
 		prev = frame.copy()
 
 
+def events_from_vector_frames(frames):
+	"""
+	Generate events one-by-one from frames.
+	"""
+	frame_it = iter(frames)
+	prev = next(frame_it).copy()
+
+	for t, frame in enumerate(frame_it):
+		diff = np.subtract(frame, prev, dtype='int16')
+		for index in np.ndindex(*diff.shape[:2]):
+			if not all(diff[index] == 0):
+				yield (t, index[0], index[1], *diff[index])
+		prev = frame.copy()
+
+
 def get_events_by_position(frames, frame_num=None):
 	"""
 	Collect events from frames, grouped by their coordinates.

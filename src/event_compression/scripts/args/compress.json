@@ -25,6 +25,16 @@
 		},
 		{
 			"args": [
+				"--grayscale"
+			],
+			"kwargs": {
+				"dest": "grayscale",
+				"action": "store_true",
+				"help": "Convert sequence to grayscale before encoding."
+			}
+		},
+		{
+			"args": [
 				"codec"
 			],
 			"kwargs": {

@@ -82,3 +82,35 @@ class RAW:
 
 		for i in range(frame_num):
 			yield decode_full_frame(data_it, res)
+
+
+@codec(name="residual")
+class Residual:
+	@classmethod
+	def encoder(cls, frames) -> bytearray:
+		it = iter(frames)
+
+		length = len(frames)
+		if length > 0:
+			first_frame = next(it)
+			res = first_frame.shape
+
+			yield struct.pack('>3I', res[0], res[1], length)
+			yield first_frame.tobytes()
+
+			prev = first_frame.copy()
+			for frame in it:
+				diff = np.subtract(frame, prev, dtype='int16')
+				yield diff.tobytes()
+				prev = frame.copy()
+
+	@classmethod
+	def decoder(cls, data) -> np.ndarray:
+		data_it = iter(data)
+
+		header = struct.unpack('>3I', take_next(data_it, 12))
+		res = (header[0], header[1])
+		frame_num = header[2]
+
+		for i in range(frame_num):
+			yield decode_full_frame(data_it, res)

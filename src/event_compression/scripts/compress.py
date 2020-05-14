@@ -18,9 +18,7 @@ from pathlib import Path
 from event_compression.sequence.video import VideoSequence, FileBytes, GrayscaleVideoConverter
 
 
-def compress(codec, inp, out):
-	frames = GrayscaleVideoConverter(VideoSequence(inp))
-
+def compress(codec, frames, inp, out):
 	for data in codec.encoder(frames):
 		out.write(data)
 
@@ -41,7 +39,10 @@ def main():
 			if args.decompress:
 				decompress(codec, inp, out)
 			else:
-				compress(codec, inp, out)
+				frames = VideoSequence(inp)
+				if args.grayscale:
+					frames = GrayscaleVideoConverter(frames)
+				compress(codec, frames, inp, out)
 
 			inp_size = os.path.getsize(inp.name)
 			out_size = os.path.getsize(out.name)
