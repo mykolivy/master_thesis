@@ -111,7 +111,7 @@
 				"entropy_coder"
 			],
 			"kwargs": {
-				"help": "{Relative path to entropy coder binary, entropy} -- will be used as a baseline for threshold analysis. If entropy is selected, sequences will be compared by their entropies. In case a path to an entropy coder is specified, representations will be compared based on the file size, resulting from applying this coder."
+				"help": "{Relative path to entropy coder binary, entropy, entropy_size} -- will be used as a baseline for threshold analysis. If entropy is selected, sequences will be compared by their entropies. In case a path to an entropy coder is specified, representations will be compared based on the file size, resulting from applying this coder."
 			}
 		},
 		{

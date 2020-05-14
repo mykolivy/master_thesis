@@ -94,8 +94,12 @@ def tab_event_threshold(codec, coder, seqs, precision):
 					assert frame.dtype == 'uint8'
 					raw += frame.tobytes()
 
-				bsize = entropy_size(coder, raw)
-				size = entropy_size(coder, encoded)
+				if coder == "entropy_size":
+					bsize = compute_entropy(seq_to_bytes(seq)) * len(raw)
+					size = compute_entropy(codec.encoder(seq)) * len(encoded)
+				else:
+					bsize = compute_size(coder, raw)
+					size = compute_size(coder, encoded)
 
 			yield rate, seq.conf.res, len(seq), bsize, size
 
@@ -114,19 +118,16 @@ def tab_event_threshold(codec, coder, seqs, precision):
 	yield res, frames, rate
 
 
-def entropy_size(coder: str, data):
-	if coder == "entropy":
-		return compute_entropy(data)
-	else:
-		with tempfile.NamedTemporaryFile('w+b') as raw:
-			with tempfile.NamedTemporaryFile('w+b') as baseline:
-				raw.write(data)
-				raw.flush()
+def compute_size(coder: str, data):
+	with tempfile.NamedTemporaryFile('w+b') as raw:
+		with tempfile.NamedTemporaryFile('w+b') as baseline:
+			raw.write(data)
+			raw.flush()
 
-				os.system(f"{coder} {raw.name} {baseline.name} > /dev/null 2>&1")
+			os.system(f"{coder} {raw.name} {baseline.name} > /dev/null 2>&1")
 
-				baseline.seek(0, 2)
-				return baseline.tell()
+			baseline.seek(0, 2)
+			return baseline.tell()
 
 
 def compute_entropy(data):
