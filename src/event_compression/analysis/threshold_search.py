@@ -4,6 +4,7 @@ import numpy as np
 import functools
 from event_compression.scripts import util
 from event_compression.codec import codecs
+from event_compression.codec.entropy import Residual
 from event_compression.sequence.synthetic import RandomChange, Config
 import math
 import operator
@@ -86,6 +87,13 @@ def tab_event_threshold(codec, coder, seqs, precision):
 			if coder == "entropy":
 				bsize = compute_entropy(seq_to_bytes(seq))
 				size = compute_entropy(codec.encoder(seq))
+			if coder == "residual_entropy_size":
+				bbytes = functools.reduce(operator.add, Residual.encoder(seq),
+				                          bytearray())
+				ebytes = functools.reduce(operator.add, codec.encoder(seq), bytearray())
+
+				bsize = compute_entropy([bbytes]) * len(bbytes)
+				size = compute_entropy([ebytes]) * len(ebytes)
 			else:
 				encoded = functools.reduce(operator.add, codec.encoder(seq),
 				                           bytearray())
