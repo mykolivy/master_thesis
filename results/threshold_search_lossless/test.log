@@ -1,0 +1,20 @@
+precision:                     0.0001
+iterations:                    1
+compute_effort:                1
+range:                         (0, 256)
+durations:                     [2, 4, 8, 16, 32, 64, 128, 256]
+resolutions:                   [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024]
+verbose:                       False
+mode:                          compute_load
+codec:                         aer
+entropy_coder:                 residual_entropy_size
+out:                           results/threshold_search_lossless/test.log
+out_redir:                     > /dev/null 2>&1
+
+
+Processing resolutions...
+================================================================================
+ #.       Resolution            Frames                    Threshold             
+================================================================================
+      Rate         Resolution        Frames          bsize            size      
+--------------------------------------------------------------------------------
