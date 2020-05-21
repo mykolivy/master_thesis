@@ -1,0 +1,78 @@
+(thesis) ➜  test [*master] ent -b virat.aer        
+Entropy = 0.560056 bits per bit.
+
+Optimum compression would reduce the size
+of this 6912055680 bit file by 43 percent.
+
+Chi square distribution for 6912055680 samples is 3765494069.06, and randomly
+would exceed this value less than 0.01 percent of the times.
+
+Arithmetic mean value of data bits is 0.1310 (0.5 = random).
+Monte Carlo value for Pi is 3.997655213 (error 27.25 percent).
+Serial correlation coefficient is 0.238088 (totally uncorrelated = 0.0).
+
+(thesis) ➜  test [*master] ent -b virat.residual
+Entropy = 0.256153 bits per bit.
+
+Optimum compression would reduce the size
+of this 21786624096 bit file by 74 percent.
+
+Chi square distribution for 21786624096 samples is 18195632932.28, and randomly
+would exceed this value less than 0.01 percent of the times.
+
+Arithmetic mean value of data bits is 0.0431 (0.5 = random).
+Monte Carlo value for Pi is 3.893543412 (error 23.94 percent).
+Serial correlation coefficient is 0.853268 (totally uncorrelated = 0.0).
+
+(thesis) ➜  test [*master] ent -b VIRAT_S_010005_04_000299_000323.raw 
+Entropy = 0.999797 bits per bit.
+
+Optimum compression would reduce the size
+of this 10904371296 bit file by 0 percent.
+
+Chi square distribution for 10904371296 samples is 3065014.57, and randomly
+would exceed this value less than 0.01 percent of the times.
+
+Arithmetic mean value of data bits is 0.4916 (0.5 = random).
+Monte Carlo value for Pi is 3.273409352 (error 4.20 percent).
+Serial correlation coefficient is -0.061136 (totally uncorrelated = 0.0).
+
+(thesis) ➜  test [*master] ent VIRAT_S_010005_04_000299_000323.raw 
+Entropy = 7.757102 bits per byte.
+
+Optimum compression would reduce the size
+of this 1363046412 byte file by 3 percent.
+
+Chi square distribution for 1363046412 samples is 420164112.10, and randomly
+would exceed this value less than 0.01 percent of the times.
+
+Arithmetic mean value of data bytes is 115.5766 (127.5 = random).
+Monte Carlo value for Pi is 3.273409352 (error 4.20 percent).
+Serial correlation coefficient is 0.864155 (totally uncorrelated = 0.0).
+
+
+(thesis) ➜  test [*master] ent virat.aer                          
+Entropy = 3.363386 bits per byte.
+
+Optimum compression would reduce the size
+of this 864006960 byte file by 57 percent.
+
+Chi square distribution for 864006960 samples is 63682116665.69, and randomly
+would exceed this value less than 0.01 percent of the times.
+
+Arithmetic mean value of data bytes is 21.6017 (127.5 = random).
+Monte Carlo value for Pi is 3.997655213 (error 27.25 percent).
+Serial correlation coefficient is -0.122416 (totally uncorrelated = 0.0).
+
+(thesis) ➜  test [*master] ent virat.residual                     
+Entropy = 0.534623 bits per byte.
+
+Optimum compression would reduce the size
+of this 2723328012 byte file by 93 percent.
+
+Chi square distribution for 2723328012 samples is 609697497910.05, and randomly
+would exceed this value less than 0.01 percent of the times.
+
+Arithmetic mean value of data bytes is 10.7053 (127.5 = random).
+Monte Carlo value for Pi is 3.893543412 (error 23.94 percent).
+Serial correlation coefficient is 0.763807 (totally uncorrelated = 0.0).

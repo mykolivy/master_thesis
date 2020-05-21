@@ -1,0 +1,57 @@
+{
+	"description": "Generate synthetic sequence.",
+	"args": [
+		{
+			"args": [
+				"--range"
+			],
+			"kwargs": {
+				"dest": "range",
+				"action": "store",
+				"default": "@[0., 1.]",
+				"nargs": "@2",
+				"type": "@float",
+				"help": "X range of the plot."
+			}
+		},
+		{
+			"args": [
+				"--samples"
+			],
+			"kwargs": {
+				"dest": "samples",
+				"action": "store",
+				"default": "@10",
+				"type": "@int",
+				"help": "Number of samples per range."
+			}
+		},
+		{
+			"args": [
+				"-r",
+				"--res"
+			],
+			"kwargs": {
+				"dest": "res",
+				"action": "store",
+				"default": "@[64,64]",
+				"nargs": "@2",
+				"type": "@int",
+				"help": "Resolution of the generated sequence: rows, columns."
+			}
+		},
+		{
+			"args": [
+				"-d",
+				"--duration"
+			],
+			"kwargs": {
+				"dest": "duration",
+				"action": "store",
+				"default": "@2",
+				"type": "@int",
+				"help": "Duration of the generated sequence."
+			}
+		}
+	]
+}

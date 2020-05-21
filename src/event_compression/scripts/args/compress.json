@@ -35,6 +35,16 @@
 		},
 		{
 			"args": [
+				"--frames"
+			],
+			"kwargs": {
+				"default": "@None",
+				"type": "@int",
+				"help": "Maximum number of frames to unpack."
+			}
+		},
+		{
+			"args": [
 				"codec"
 			],
 			"kwargs": {

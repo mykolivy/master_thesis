@@ -87,13 +87,16 @@ def tab_event_threshold(codec, coder, seqs, precision):
 			if coder == "entropy":
 				bsize = compute_entropy(seq_to_bytes(seq))
 				size = compute_entropy(codec.encoder(seq))
-			if coder == "residual_entropy_size":
+			elif coder == "residual_entropy_size":
 				bbytes = functools.reduce(operator.add, Residual.encoder(seq),
 				                          bytearray())
 				ebytes = functools.reduce(operator.add, codec.encoder(seq), bytearray())
 
 				bsize = compute_entropy([bbytes]) * len(bbytes)
 				size = compute_entropy([ebytes]) * len(ebytes)
+			elif coder == "residual_entropy":
+				bsize = compute_entropy(Residual.encoder(seq))
+				size = compute_entropy(codec.encoder(seq))
 			else:
 				encoded = functools.reduce(operator.add, codec.encoder(seq),
 				                           bytearray())

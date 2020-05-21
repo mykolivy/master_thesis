@@ -181,11 +181,11 @@ class RandomChange:
 
 		total = (frame_num - 1) * self.res_sq
 
-		change = round(target * total / (frame_num - 1))
+		change = int(round(target * total / (frame_num - 1)))
 		dist = np.full(frame_num - 1, change)
 		total_changed = change * (frame_num - 1)
 
-		to_change = round(target * total - total_changed)
+		to_change = int(round(target * total - total_changed))
 		if abs(to_change) >= 1:
 			self.distribute(dist, to_change)
 
