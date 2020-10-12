@@ -39,7 +39,7 @@ def main():
 			if args.decompress:
 				decompress(codec, inp, out)
 			else:
-				frames = VideoSequence(inp, max_frames=args.frames)
+				frames = VideoSequence(inp)
 				if args.grayscale:
 					frames = GrayscaleVideoConverter(frames)
 				compress(codec, frames, inp, out)

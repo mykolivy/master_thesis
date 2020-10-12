@@ -122,6 +122,42 @@ class TestAER:
 			np.testing.assert_equal(frame, seq[i])
 
 
+@invertability_test(aer.ShortAER)
+class TestShortAER:
+	def test_encoder(self):
+		sequence = simple_seq()
+		code = reduce(self.cls.encoder(sequence))
+		correct_code = struct.pack('>3I 9B 2BI2B 2BI2B 2BI2B 2BI2B', 3, 3, 6, 0, 0,
+		                           0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 255, 1, 1, 1, 3,
+		                           248, 0, 0, 0, 4, 255, 1, 1, 1, 4, 7, 0)
+		assert code == correct_code
+
+	def test_encode_moving_edge(self):
+		seq = MovingEdge(Config((3, 3), 2, 2))
+		code = reduce(self.cls.encoder(seq))
+		correct_code = struct.pack('>3I 9B 2BI2B 2BI2B 2BI2B 2BI2B 2BI2B 2BI2B', 3,
+		                           3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 1,
+		                           1, 0, 0, 255, 1, 2, 0, 0, 255, 1, 0, 1, 1, 255,
+		                           1, 1, 1, 1, 255, 1, 2, 1, 1, 255, 1)
+
+		assert code == correct_code
+
+	def test_encode_single_color(self):
+		seq = SingleColor(Config((3, 3), 4, 1, value=127))
+		code = reduce(self.cls.encoder(seq))
+		correct_code = struct.pack('>3I 9B', 3, 3, 4, 127, 127, 127, 127, 127, 127,
+		                           127, 127, 127)
+		assert code == correct_code
+
+	def test_decode_single_color(self):
+		seq = [x for x in SingleColor(Config((3, 3), 4, 1, value=127))]
+		code = struct.pack('>3I 9B', 3, 3, 4, 127, 127, 127, 127, 127, 127, 127,
+		                   127, 127)
+		frames = [x.copy() for x in self.cls.decoder(code)]
+		for i, frame in enumerate(frames):
+			np.testing.assert_equal(frame, seq[i])
+
+
 @invertability_test(aer.AERLossy, threshold=5)
 class TestAERLossy:
 	def test_encoder(self):

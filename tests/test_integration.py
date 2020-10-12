@@ -110,7 +110,7 @@ class TestThresholdSearch:
 		frames = frames[:-2]
 		result_rates = result_rates[:-2]
 
-		srates = [x - 0.01 for x in result_rates]
+		srates = [x - 0.05 for x in result_rates]
 		nrates = [x + 0.05 for x in result_rates]
 
 		codec = AER

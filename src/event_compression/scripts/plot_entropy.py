@@ -27,7 +27,7 @@ def main():
 	args = get_args()
 
 	x = np.linspace(*args.range, args.samples)
-	codec_names = ["raw", "aer", "residual"]
+	codec_names = ["raw", "short_aer", "residual"]
 	codec_colors = ["k", "b", "r"]
 	results = {name: [] for name in codec_names}
 
@@ -37,7 +37,11 @@ def main():
 			codec = codecs()[codec_name]
 			bytes_seq = functools.reduce(operator.add, codec.encoder(seq),
 			                             bytearray())
-			result = compute_entropy([bytes_seq]) * len(bytes_seq)
+			# Leave one, comment out the others
+			#result = len(bytes_seq)
+			#result = compute_entropy([bytes_seq])
+			result = len(bytes_seq) * compute_entropy([bytes_seq])
+
 			results[codec_name].append(result)
 			print(result)
 	print("SUMMARY:")
@@ -50,10 +54,14 @@ def main():
 		plt.plot(x, results[codec_name], color, label=codec_name)
 
 	plt.xlabel('Event Rate')
-	plt.ylabel('Entropy * Signal length')
+
+	# Comment out the same lines as previously
+	#plt.ylabel('Bytes')
+	#plt.ylabel('Entropy')
+	plt.ylabel('Average Compressed Size (bytes)')
+
 	plt.title(
-	    f"Entropy Lengths res:{args.res}, dur:{args.duration}, samples:{args.samples}"
-	)
+	    f"File sizes res:{args.res}, dur:{args.duration}, samples:{args.samples}")
 	plt.legend()
 
 	plt.show()
