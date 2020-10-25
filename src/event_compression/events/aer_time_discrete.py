@@ -1,8 +1,11 @@
-input_file = "data/dynamic_6dof-2.txt"
-output_file = "data/time_discrete/dynamic_6dof-2.txt"
+import sys
 
-#time_window = 0.033
-time_window = 1.0
+input_file = sys.argv[1]
+output_file = sys.argv[2]
+
+time_window = 0.033
+if len(sys.argv) == 4:
+	time_window = float(sys.argv[3])
 
 
 def to_event(line):

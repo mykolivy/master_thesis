@@ -63,9 +63,12 @@ class EventsToFrames:
 
 
 index = 0
+time_window = 0.03333
+shape = (180, 240)
 with open(input_file, "r") as f:
 	width, height = [int(x) for x in f.readline().split(" ")]
 	first_event = to_event(f.readline())
+	frame_event = first_event
 
 	cum_t = 0.
 	prev_t = first_event[0]
