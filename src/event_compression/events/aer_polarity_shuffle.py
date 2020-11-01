@@ -36,19 +36,10 @@ def append_window_events(time_window_events, events, width, height):
 	perturbed_window = []
 	for row in matrix:
 		for timeline in row:
-			if len(timeline) == 0:
-				continue
-			elif len(timeline) == 1:
-				perturbed_window.extend(timeline)
-			else:
-				t_start = timeline[0][0]
-				t_end = timeline[-1][0]
-				delta_t = abs((t_end - t_start) / (len(timeline) - 1))
-
-				perturbed_timeline = [(t_start + i * delta_t, ) + x[1:]
-				                      for i, x in enumerate(timeline)]
-
-				perturbed_window.extend(perturbed_timeline)
+			polarities = [x[-1] for x in timeline]
+			random.shuffle(polarities)
+			timeline = [x[:-1] + (polarities[i], ) for i, x in enumerate(timeline)]
+			perturbed_window.extend(timeline)
 
 	time_window_events = sorted(perturbed_window, key=lambda x: x[0])
 
