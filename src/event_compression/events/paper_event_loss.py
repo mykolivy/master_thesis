@@ -1,8 +1,7 @@
 import sys, random
 import numpy as np
 
-scale = (1., 1.)
-
+scale = 1.
 left_file = sys.argv[1]
 right_file = sys.argv[2]
 
@@ -22,13 +21,6 @@ def write_events(events, out):
 	out.write('\n'.join(events) + '\n')
 
 
-def time_window_to_matrix(time_window, width, height):
-	matrix = [[[] for y in range(height)] for x in range(width)]
-	for event in time_window:
-		matrix[event[1]][event[2]].append(event)
-	return matrix
-
-
 def read_dims(f):
 	return [int(x) for x in f.readline().split(" ")]
 
@@ -43,8 +35,10 @@ def compute_accumulated(width, height, matl, matr, result):
 		for j in range(height):
 			min_len = min(len(matl[i][j]), len(matr[i][j]))
 			if min_len != 0:
-				left = np.array(matl[i][j][:min_len])
-				right = np.array(matr[i][j][:min_len])
+				left = np.array([x[0] for x in matl[i][j][:min_len]])
+				right = np.array([x[0] for x in matr[i][j][:min_len]])
+				if left.shape != right.shape:
+					breakpoint()
 
 				result[i, j] += np.sum((((left - right) * scale)**2.), axis=0)
 				matl[i][j] = matl[i][j][min_len:]
@@ -60,14 +54,17 @@ with open(left_file, "r") as lfin, open(right_file, "r") as rfin:
 
 	matl = [[[] for y in range(height)] for x in range(width)]
 	matr = [[[] for y in range(height)] for x in range(width)]
-	result = np.zeros(left_dims + [2])
-	n = 0
+	lframe_acc, rframe_acc = np.zeros(left_dims,
+	                                  dtype=np.int64), np.zeros(right_dims,
+	                                                            dtype=np.int64)
+	result = np.zeros(left_dims)
 	counter = 0
 	for x, y in zip(iterate_events(lfin), iterate_events(rfin)):
 		# Accumulate
 		matl[x[1]][x[2]].append((x[0], x[3]))
 		matr[y[1]][y[2]].append((y[0], y[3]))
-		n += 1
+		lframe_acc[x[1], x[2]] += int(x[3])
+		rframe_acc[y[1], y[2]] += int(y[3])
 		counter += 1
 
 		# Compute and clean
@@ -76,5 +73,8 @@ with open(left_file, "r") as lfin, open(right_file, "r") as rfin:
 			counter = 0
 	compute_accumulated(width, height, matl, matr, result)
 
-	print(f"EVENT MSE: {np.mean(np.sqrt(result), axis=(0, 1))}")
-	print(f"Mean MSE: {np.mean(np.sqrt(result))}")
+	result = np.mean(np.sqrt(result)), np.mean(
+	    np.sqrt((lframe_acc - rframe_acc)**2.))
+
+	print(f"EVENT MSE: {result}")
+	print(f"Mean MSE: {np.mean(result)}")
