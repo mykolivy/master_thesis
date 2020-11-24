@@ -26,15 +26,15 @@ result = []
 for l_frame, r_frame in zip(left_frames, right_frames):
 	result.append({"mse": np.mean((l_frame - r_frame)**2)})
 
-print(result)
+# print(result)
 
 # Calculate mean
 mse = [x['mse'] for x in result]
 print(f"Mean MSE: {np.mean(mse)}")
 
 # Plot
-plt.plot(mse)
-plt.ylabel("MSE")
-plt.xlabel("Frame")
-plt.title(f"{left_directory} vs {right_directory}")
-plt.show()
+# plt.plot(mse)
+# plt.ylabel("MSE")
+# plt.xlabel("Frame")
+# plt.title(f"{left_directory} vs {right_directory}")
+# plt.show()

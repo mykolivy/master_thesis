@@ -61,9 +61,20 @@ def tabulate_search(points, seq_provider, args, out):
 			table.print(f"{j+1}.", *threshold, lengths=[5, 20, 20, 35])
 			table.print_line("=")
 
-		results[i] = (threshold[0], threshold[1], sum(samples) / args.iterations)
+		results[i] = (threshold[0], threshold[1], np.mean(samples))
 		table.print_line("*")
 		table.print("avg:", *results[i], lengths=[5, 25, 25, 25])
+
+		# Bootstrap for confidence interval
+		B = 100000
+		bsamples = np.random.choice(samples, (len(samples), B))
+		bmeans = np.mean(bsamples, axis=0)
+		bmeans.sort()
+		bmean = np.mean(bmeans)
+		conf_int = np.percentile(bmeans, [2.5, 97.5])
+		print(f"Bootstrap mean: {bmean}")
+		print(f"Confidence interval (95%): {conf_int}")
+		print(f"Samples: {samples}")
 		table.print_line("*")
 
 	table.print("SUMMARY")
