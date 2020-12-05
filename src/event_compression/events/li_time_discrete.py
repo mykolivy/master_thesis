@@ -33,6 +33,8 @@ def time_window_to_matrix(time_window, width, height):
 def append_window_events(time_window_events, events, width, height):
 	if len(time_window_events) == 0:
 		return
+	elif len(time_window_events) == 1:
+		events.extend(time_window_events)
 	else:
 		t_start = time_window_events[0][0]
 		t_end = time_window_events[-1][0]
@@ -41,7 +43,7 @@ def append_window_events(time_window_events, events, width, height):
 		perturbed_window = [(t_start + i * delta_t, ) + x[1:]
 		                    for i, x in enumerate(time_window_events)]
 
-	events.extend(sorted(perturbed_window, key=lambda x: x[0]))
+		events.extend(sorted(perturbed_window, key=lambda x: x[0]))
 
 
 with open(input_file, "r") as f:
