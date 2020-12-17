@@ -62,3 +62,25 @@ with open(output_file, "w") as fout:
 			total_events += len(lines)
 
 print(f"Total events extracted: {total_events}")
+
+# Loading dataset
+# import tensorflow as tf
+# record_defaults = [float()] * 6
+# filenames = ["/home/dumpling/Documents/uni/thesis/test.txt"]
+# # dataset = tf.data.experimental.CsvDataset(filenames,
+# #                                           record_defaults=record_defaults,
+# #                                           field_delim=' ').batch(4)
+# # for x in dataset:
+# # 	print(tf.reshape(tf.transpose(tf.stack(x)), (4, 2, -1)))
+# # 	break
+
+# def string_to_tensor(x):
+# 	return tf.reshape(tf.strings.to_number(tf.strings.split(x, sep=' ')), (2, -1))
+
+# print("ANOTHER")
+# dataset = tf.data.TextLineDataset(
+#     filenames, compression_type=None, buffer_size=None,
+#     num_parallel_reads=None).map(string_to_tensor).shuffle(10000).batch(2)
+# for x in dataset:
+# 	print(x)
+# 	break
