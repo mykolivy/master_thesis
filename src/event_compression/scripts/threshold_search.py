@@ -72,9 +72,9 @@ def tabulate_search(points, seq_provider, args, out):
 		bmeans.sort()
 		bmean = np.mean(bmeans)
 		conf_int = np.percentile(bmeans, [2.5, 97.5])
-		print(f"Bootstrap mean: {bmean}")
-		print(f"Confidence interval (95%): {conf_int}")
-		print(f"Samples: {samples}")
+		table.print(f"Bootstrap mean: {bmean}")
+		table.print(f"Confidence interval (95%): {conf_int}")
+		table.print(f"Samples: {samples}")
 		table.print_line("*")
 
 	table.print("SUMMARY")

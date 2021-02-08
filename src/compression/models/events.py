@@ -36,6 +36,7 @@ import pdb
 from absl import app
 from absl.flags import argparse_flags
 import numpy as np
+import pandas as pd
 import tensorflow.compat.v1 as tf
 import tensorflow as tf2
 
@@ -58,6 +59,12 @@ def read_png(filename):
 	image = tf.reshape(image, (28, 28, 1))
 	image /= 255
 	return tf.random.normal((32, 32, 3))
+
+
+def read_events(filename):
+	df = pd.read_csv(filename, sep=' ', dtype=np.float32)
+	values = np.transpose(np.reshape(df.values, (-1, 2, 128)), (0, 2, 1))
+	return values
 
 
 def quantize_image(image):
@@ -196,12 +203,11 @@ def train(args):
 
 
 def compress(args):
-	"""Compresses an image."""
+	"""Compresses an event file."""
 
 	# Load input image and add batch dimension.
-	x = read_png(args.input_file)
-	x = tf.expand_dims(x, 0)
-	x.set_shape([1, None, None, 3])
+	x = tf.constant(read_events(args.input_file))
+	# x.set_shape(tf.shape(x))
 	x_shape = tf.shape(x)
 
 	# Instantiate model.
@@ -209,28 +215,28 @@ def compress(args):
 	entropy_bottleneck = tfc.EntropyBottleneck()
 	synthesis_transform = SynthesisTransform(args.num_filters)
 
-	# Transform and compress the image.
+	# Transform and compress the events.
 	y = analysis_transform(x)
 	string = entropy_bottleneck.compress(y)
 
-	# Transform the quantized image back (if requested).
+	# Transform the quantized representation back (if requested).
 	y_hat, likelihoods = entropy_bottleneck(y, training=False)
 	x_hat = synthesis_transform(y_hat)
-	x_hat = x_hat[:, :x_shape[1], :x_shape[2], :]
+	# x_hat = x_hat[:, :x_shape[1], :x_shape[2], :]
 
-	num_pixels = tf.cast(tf.reduce_prod(tf.shape(x)[:-1]), dtype=tf.float32)
+	# num_pixels = tf.cast(tf.reduce_prod(tf.shape(x)[:-1]), dtype=tf.float32)
+	num_pixels = tf.cast(tf.shape(x)[0] * 128, dtype=tf.float32)
 
 	# Total number of bits divided by number of pixels.
 	eval_bpp = tf.reduce_sum(tf.log(likelihoods)) / (-np.log(2) * num_pixels)
 
 	# Bring both images back to 0..255 range.
-	x *= 255
-	x_hat = tf.clip_by_value(x_hat, 0, 1)
-	x_hat = tf.round(x_hat * 255)
+	# x_hat = tf.clip_by_value(x_hat, 0, 1)
+	x_hat = tf.round(x_hat)
 
 	mse = tf.reduce_mean(tf.squared_difference(x, x_hat))
-	psnr = tf.squeeze(tf.image.psnr(x_hat, x, 255))
-	msssim = tf.squeeze(tf.image.ssim_multiscale(x_hat, x, 255))
+	# psnr = tf.squeeze(tf.image.psnr(x_hat, x, 255))
+	# msssim = tf.squeeze(tf.image.ssim_multiscale(x_hat, x, 255))
 
 	with tf.Session() as sess:
 		# Load the latest model checkpoint, get the compressed string and the tensor
@@ -248,16 +254,17 @@ def compress(args):
 
 		# If requested, transform the quantized image back and measure performance.
 		if args.verbose:
-			eval_bpp, mse, psnr, msssim, num_pixels = sess.run(
-			    [eval_bpp, mse, psnr, msssim, num_pixels])
+			# eval_bpp, mse, psnr, msssim, num_pixels = sess.run(
+			# [eval_bpp, mse, psnr, msssim, num_pixels])
+			eval_bpp, mse, num_pixels = sess.run([eval_bpp, mse, num_pixels])
 
 			# The actual bits per pixel including overhead.
 			bpp = len(packed.string) * 8 / num_pixels
 
 			print("Mean squared error: {:0.4f}".format(mse))
-			print("PSNR (dB): {:0.2f}".format(psnr))
-			print("Multiscale SSIM: {:0.4f}".format(msssim))
-			print("Multiscale SSIM (dB): {:0.2f}".format(-10 * np.log10(1 - msssim)))
+			# print("PSNR (dB): {:0.2f}".format(psnr))
+			# print("Multiscale SSIM: {:0.4f}".format(msssim))
+			# print("Multiscale SSIM (dB): {:0.2f}".format(-10 * np.log10(1 - msssim)))
 			print("Information content in bpp: {:0.4f}".format(eval_bpp))
 			print("Actual bits per pixel: {:0.4f}".format(bpp))
 
