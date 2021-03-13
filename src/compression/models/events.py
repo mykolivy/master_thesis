@@ -32,6 +32,7 @@ import argparse
 import glob
 import sys
 import pdb
+import os
 
 from absl import app
 from absl.flags import argparse_flags
@@ -88,9 +89,25 @@ class AnalysisTransform(tf.keras.layers.Layer):
 
 	def build(self, input_shape):
 		self._layers = [
-		    tfc.SignalConv1D(32, 3, strides_down=2, padding="same_zeros"),
-		    tfc.SignalConv1D(32, 3, strides_down=2, padding="same_zeros"),
-		    tfc.SignalConv1D(32, 3, strides_down=2, padding="same_zeros")
+		    tfc.SignalConv1D(self.num_filters,
+		                     3,
+		                     strides_down=2,
+		                     padding="same_zeros"),
+		    tfc.GDN(),
+		    tfc.SignalConv1D(self.num_filters, 3, padding="same_zeros"),
+		    tf.keras.layers.ReLU(),
+		    tfc.SignalConv1D(self.num_filters,
+		                     3,
+		                     strides_down=2,
+		                     padding="same_zeros"),
+		    tfc.GDN(),
+		    tfc.SignalConv1D(self.num_filters, 3, padding="same_zeros"),
+		    tf.keras.layers.ReLU(),
+		    tfc.SignalConv1D(self.num_filters // 8,
+		                     3,
+		                     strides_down=2,
+		                     padding="same_zeros"),
+		    tfc.GDN()
 		]
 		super(AnalysisTransform, self).build(input_shape)
 
@@ -108,9 +125,25 @@ class SynthesisTransform(tf.keras.layers.Layer):
 
 	def build(self, input_shape):
 		self._layers = [
-		    tfc.SignalConv1D(32, 3, strides_up=2, padding="same_zeros"),
-		    tfc.SignalConv1D(32, 3, strides_up=2, padding="same_zeros"),
-		    tfc.SignalConv1D(32, 3, strides_up=2, padding="same_zeros"),
+		    tfc.GDN(inverse=True),
+		    tfc.SignalConv1D(self.num_filters // 8,
+		                     3,
+		                     strides_up=2,
+		                     padding="same_zeros"),
+		    tf.keras.layers.ReLU(),
+		    tfc.SignalConv1D(self.num_filters, 3, padding="same_zeros"),
+		    tfc.GDN(inverse=True),
+		    tfc.SignalConv1D(self.num_filters,
+		                     3,
+		                     strides_up=2,
+		                     padding="same_zeros"),
+		    tf.keras.layers.ReLU(),
+		    tfc.SignalConv1D(self.num_filters, 3, padding="same_zeros"),
+		    tfc.GDN(inverse=True),
+		    tfc.SignalConv1D(self.num_filters,
+		                     3,
+		                     strides_up=2,
+		                     padding="same_zeros"),
 		    tfc.SignalConv1D(2, 3, padding="same_zeros"),
 		]
 
@@ -151,24 +184,25 @@ def train(args):
 	x = train_dataset.make_one_shot_iterator().get_next()
 
 	# Instantiate model.
-	analysis_transform = AnalysisTransform(args.num_filters)
+	analysis_transform = AnalysisTransform(32)
 	entropy_bottleneck = tfc.EntropyBottleneck()
-	synthesis_transform = SynthesisTransform(args.num_filters)
+	synthesis_transform = SynthesisTransform(32)
 
 	# Build autoencoder.
 	y = analysis_transform(x)
-	# y = tf.expand_dims(y, -1)
 	y_tilde, likelihoods = entropy_bottleneck(y, training=True)
-	# y_tilde = tf.squeeze(y_tilde, -1)
 	x_tilde = synthesis_transform(y_tilde)
+	timestamps, polarities = tf.split(x_tilde, num_or_size_splits=2, axis=-1)
+	timestamps = tf.math.abs(timestamps)
+	polarities = tf.math.tanh(polarities)
+	x_tilde = tf.concat([timestamps, polarities], axis=-1)
 
-	# Total number of bits divided by number of pixels.
-	train_bpp = tf.reduce_sum(tf.log(likelihoods)) / (-np.log(2) * num_pixels)
+	train_bpp = tf.reduce_mean(
+	    -tf.reduce_sum(likelihoods * tf.log(likelihoods), axis=[1, 2]) /
+	    np.log(2))
 
 	# Mean squared error across pixels.
-	train_mse = tf.reduce_mean(tf.squared_difference(x, x_tilde))
-	# Multiply by 255^2 to correct for rescaling.
-	# train_mse *= 255**2
+	train_mse = tf.reduce_mean((x - x_tilde)**2.)
 
 	# The rate-distortion cost.
 	train_loss = args.lmbda * train_mse + train_bpp
@@ -187,9 +221,6 @@ def train(args):
 	tf.summary.scalar("bpp", train_bpp)
 	tf.summary.scalar("mse", train_mse)
 
-	# tf.summary.image("original", quantize_image(x))
-	# tf.summary.image("reconstruction", quantize_image(x_tilde))
-
 	hooks = [
 	    tf.train.StopAtStepHook(last_step=args.last_step),
 	    tf.train.NanTensorHook(train_loss),
@@ -205,38 +236,29 @@ def train(args):
 def compress(args):
 	"""Compresses an event file."""
 
-	# Load input image and add batch dimension.
 	x = tf.constant(read_events(args.input_file))
-	# x.set_shape(tf.shape(x))
 	x_shape = tf.shape(x)
 
-	# Instantiate model.
-	analysis_transform = AnalysisTransform(args.num_filters)
+	analysis_transform = AnalysisTransform(32)
 	entropy_bottleneck = tfc.EntropyBottleneck()
-	synthesis_transform = SynthesisTransform(args.num_filters)
+	synthesis_transform = SynthesisTransform(32)
 
-	# Transform and compress the events.
 	y = analysis_transform(x)
 	string = entropy_bottleneck.compress(y)
 
-	# Transform the quantized representation back (if requested).
 	y_hat, likelihoods = entropy_bottleneck(y, training=False)
 	x_hat = synthesis_transform(y_hat)
-	# x_hat = x_hat[:, :x_shape[1], :x_shape[2], :]
 
-	# num_pixels = tf.cast(tf.reduce_prod(tf.shape(x)[:-1]), dtype=tf.float32)
-	num_pixels = tf.cast(tf.shape(x)[0] * 128, dtype=tf.float32)
+	timestamps, polarities = tf.split(x_hat, num_or_size_splits=2, axis=-1)
+	timestamps = tf.math.abs(timestamps)
+	polarities = tf.round(tf.math.tanh(polarities))
+	x_hat = tf.concat([timestamps, polarities], axis=-1)
 
-	# Total number of bits divided by number of pixels.
-	eval_bpp = tf.reduce_sum(tf.log(likelihoods)) / (-np.log(2) * num_pixels)
+	eval_bpp = tf.reduce_mean(
+	    -tf.reduce_sum(likelihoods * tf.log(likelihoods), axis=[1, 2]) /
+	    np.log(2))
 
-	# Bring both images back to 0..255 range.
-	# x_hat = tf.clip_by_value(x_hat, 0, 1)
-	x_hat = tf.round(x_hat)
-
-	mse = tf.reduce_mean(tf.squared_difference(x, x_hat))
-	# psnr = tf.squeeze(tf.image.psnr(x_hat, x, 255))
-	# msssim = tf.squeeze(tf.image.ssim_multiscale(x_hat, x, 255))
+	mse = tf.reduce_mean((x - x_hat)**2.)
 
 	with tf.Session() as sess:
 		# Load the latest model checkpoint, get the compressed string and the tensor
@@ -256,17 +278,13 @@ def compress(args):
 		if args.verbose:
 			# eval_bpp, mse, psnr, msssim, num_pixels = sess.run(
 			# [eval_bpp, mse, psnr, msssim, num_pixels])
-			eval_bpp, mse, num_pixels = sess.run([eval_bpp, mse, num_pixels])
+			eval_bpp, mse = sess.run([eval_bpp, mse])
 
-			# The actual bits per pixel including overhead.
-			bpp = len(packed.string) * 8 / num_pixels
+			compression_ratio = os.path.getsize(args.input_file) / len(packed.string)
 
 			print("Mean squared error: {:0.4f}".format(mse))
-			# print("PSNR (dB): {:0.2f}".format(psnr))
-			# print("Multiscale SSIM: {:0.4f}".format(msssim))
-			# print("Multiscale SSIM (dB): {:0.2f}".format(-10 * np.log10(1 - msssim)))
-			print("Information content in bpp: {:0.4f}".format(eval_bpp))
-			print("Actual bits per pixel: {:0.4f}".format(bpp))
+			print("Estimated entropy: {}".format(eval_bpp))
+			print("Compression ratio: {}".format(compression_ratio))
 
 
 def decompress(args):

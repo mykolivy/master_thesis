@@ -76,7 +76,7 @@ class MovingEdge:
 		position = 0
 		for _ in range(self.conf.frame_num - 1):
 			position += self.step_length
-			frame[:, int(position)] = 255
+			frame[:, 0:int(position)] = 255
 			yield frame
 
 	def __len__(self):
